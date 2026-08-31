@@ -17,6 +17,8 @@ import { ThemeCustomizerModal } from './components/Theme/ThemeCustomizerModal';
 import { MiniTimerWidget } from './components/Modals/MiniTimerWidget';
 import { RealmeWatchSyncModal } from './components/Modals/RealmeWatchSyncModal';
 import { HealthAnalyticsModal } from './components/Modals/HealthAnalyticsModal';
+import { MaangAccessDeniedView } from './components/MaangRoadmap/MaangAccessDeniedView';
+import { canAccessMaangPrep } from './utils/authPermissions';
 import { TimerProvider } from './context/TimerContext';
 import { GraduationCap } from 'lucide-react';
 
@@ -49,7 +51,9 @@ const AppContent: React.FC = () => {
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'topics' && <TopicsListView />}
         {activeTab === 'timeline' && <TimelineView />}
-        {activeTab === 'maang' && <MaangRoadmapView />}
+        {activeTab === 'maang' && (
+          canAccessMaangPrep(user?.email) ? <MaangRoadmapView /> : <MaangAccessDeniedView />
+        )}
         {activeTab === 'summary' && <SummaryHubView />}
       </main>
 

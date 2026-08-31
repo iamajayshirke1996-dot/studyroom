@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useStudy } from '../../context/StudyContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { canAccessMaangPrep } from '../../utils/authPermissions';
 import { StatCard } from './StatCard';
 import { DsaSummaryWidget } from './DsaSummaryWidget';
 import { UpcomingDeadlinesWidget } from './UpcomingDeadlinesWidget';
@@ -42,6 +44,8 @@ export const DashboardView: React.FC = () => {
   } = useStudy();
 
   const { currentTheme } = useTheme();
+  const { user } = useAuth();
+  const isMaangAuthorized = canAccessMaangPrep(user?.email);
 
   // User-friendly view mode
   const [dashboardFocus, setDashboardFocus] = useState<'all' | 'maang' | 'dsa' | 'recap'>('all');
@@ -182,17 +186,19 @@ export const DashboardView: React.FC = () => {
           🌟 All Overview
         </button>
 
-        <button
-          onClick={() => setDashboardFocus('maang')}
-          className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
-            dashboardFocus === 'maang'
-              ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-slate-950 font-bold shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
-          }`}
-        >
-          <Flame className="h-3.5 w-3.5 fill-current" />
-          <span>MAANG 3-Month Sprint</span>
-        </button>
+        {isMaangAuthorized && (
+          <button
+            onClick={() => setDashboardFocus('maang')}
+            className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+              dashboardFocus === 'maang'
+                ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-slate-950 font-bold shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
+            }`}
+          >
+            <Flame className="h-3.5 w-3.5 fill-current" />
+            <span>MAANG 3-Month Sprint</span>
+          </button>
+        )}
 
         <button
           onClick={() => setDashboardFocus('dsa')}
@@ -219,8 +225,8 @@ export const DashboardView: React.FC = () => {
         </button>
       </div>
 
-      {/* MAANG Sprint Widget (Shown on 'all' and 'maang') */}
-      {(dashboardFocus === 'all' || dashboardFocus === 'maang') && <MaangDashboardWidget />}
+      {/* MAANG Sprint Widget (Only shown if authorized) */}
+      {isMaangAuthorized && (dashboardFocus === 'all' || dashboardFocus === 'maang') && <MaangDashboardWidget />}
 
       {/* Spaced Repetition Prompt (Shown on 'all' and 'recap') */}
       {(dashboardFocus === 'all' || dashboardFocus === 'recap') && <SpacedRepetitionPrompt />}

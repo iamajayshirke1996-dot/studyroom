@@ -16,11 +16,13 @@ import {
   RotateCcw,
   LogOut,
   ChevronDown,
+  Lock,
 } from 'lucide-react';
 import { useStudy } from '../context/StudyContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useTimer } from '../context/TimerContext';
+import { canAccessMaangPrep } from '../utils/authPermissions';
 
 export const Navbar: React.FC = () => {
   const {
@@ -69,13 +71,15 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const isMaangAuthorized = canAccessMaangPrep(user?.email);
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'topics', label: 'Courses', icon: BookOpen },
     { id: 'timeline', label: 'Timeline', icon: CalendarDays },
-    { id: 'maang', label: 'MAANG Prep', icon: Flame },
+    ...(isMaangAuthorized ? [{ id: 'maang', label: 'MAANG Prep', icon: Flame }] : []),
     { id: 'summary', label: 'Summaries', icon: Brain },
-  ] as const;
+  ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md transition-colors">
@@ -108,10 +112,11 @@ export const Navbar: React.FC = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => setActiveTab(item.id as any)}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     isActive
                       ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold'
@@ -300,7 +305,7 @@ export const Navbar: React.FC = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => setActiveTab(item.id as any)}
                 className={`flex flex-col items-center text-[11px] transition-colors ${
                   isActive
                     ? 'font-bold'
