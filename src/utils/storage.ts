@@ -1,4 +1,4 @@
-import { LearningGoal, StudySession, MaangWeek, DailySteps } from '../types';
+import { LearningGoal, StudySession, MaangWeek, DailySteps, JobOutreach } from '../types';
 import { INITIAL_GOALS, INITIAL_STUDY_SESSIONS } from './initialData';
 import { INITIAL_MAANG_WEEKS } from './maangData';
 
@@ -7,6 +7,8 @@ const SESSIONS_STORAGE_KEY = 'studypulse_sessions_v2';
 const MAANG_STORAGE_KEY = 'studypulse_maang_weeks_v2';
 const STEPS_STORAGE_KEY = 'studypulse_steps_v1';
 const STEP_HISTORY_STORAGE_KEY = 'studypulse_step_history_v1';
+const JOB_OUTREACH_STORAGE_KEY = 'studypulse_job_outreach_v1';
+const JOB_OUTREACH_GOAL_KEY = 'studypulse_job_outreach_goal_v1';
 
 export function loadGoalsFromStorage(): LearningGoal[] {
   try {
@@ -174,6 +176,126 @@ export function saveStepHistoryToStorage(history: Record<string, DailySteps>): v
     localStorage.setItem(STEP_HISTORY_STORAGE_KEY, JSON.stringify(history));
   } catch (err) {
     console.error('Failed to save step history to storage:', err);
+  }
+}
+
+export function getInitialJobOutreaches(): JobOutreach[] {
+  const todayStr = getLocalDateString();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = getLocalDateString(yesterday);
+
+  return [
+    {
+      id: 'job-1',
+      companyName: 'Google',
+      role: 'Senior Frontend Engineer',
+      platform: 'linkedin',
+      type: 'job_application',
+      status: 'interviewing',
+      appliedDate: yesterdayStr,
+      contactName: 'Sarah Jenkins (Recruiter)',
+      jobUrl: 'https://careers.google.com/jobs/results/123456',
+      notes: 'Passed initial recruiter screening. Technical round scheduled for next week.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'job-2',
+      companyName: 'Stripe',
+      role: 'Full Stack Engineer (React/Node)',
+      platform: 'cold_email',
+      type: 'cold_email',
+      status: 'replied',
+      appliedDate: todayStr,
+      contactName: 'Alex Rivera (Engineering Manager)',
+      contactHandle: 'alex@stripe.com',
+      notes: 'Sent cold email highlighting React optimization work. Alex replied asking for availability.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'job-3',
+      companyName: 'OpenAI',
+      role: 'Frontend UI Systems Engineer',
+      platform: 'twitter',
+      type: 'cold_dm',
+      status: 'replied',
+      appliedDate: todayStr,
+      contactName: 'David K. (Design Systems Lead)',
+      contactHandle: '@david_openai',
+      notes: 'DMed on X about modern UI component library architecture. Received positive response.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'job-4',
+      companyName: 'Vercel',
+      role: 'Solutions Architect',
+      platform: 'referral',
+      type: 'referral_request',
+      status: 'applied',
+      appliedDate: todayStr,
+      contactName: 'Michael Chen (Staff Engineer)',
+      notes: 'Connected via mutual friend on LinkedIn. Internal referral submitted.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'job-5',
+      companyName: 'Figma',
+      role: 'Product Engineer',
+      platform: 'wellfound',
+      type: 'job_application',
+      status: 'applied',
+      appliedDate: yesterdayStr,
+      jobUrl: 'https://wellfound.com/jobs/figma-product-engineer',
+      notes: 'Submitted customized cover note focusing on Canvas rendering performance.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+}
+
+export function loadJobOutreachesFromStorage(): JobOutreach[] {
+  try {
+    const raw = localStorage.getItem(JOB_OUTREACH_STORAGE_KEY);
+    if (!raw) {
+      const initial = getInitialJobOutreaches();
+      saveJobOutreachesToStorage(initial);
+      return initial;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : getInitialJobOutreaches();
+  } catch {
+    return getInitialJobOutreaches();
+  }
+}
+
+export function saveJobOutreachesToStorage(outreaches: JobOutreach[]): void {
+  try {
+    localStorage.setItem(JOB_OUTREACH_STORAGE_KEY, JSON.stringify(outreaches));
+  } catch (err) {
+    console.error('Failed to save job outreaches to storage:', err);
+  }
+}
+
+export function loadOutreachDailyGoalFromStorage(): number {
+  try {
+    const raw = localStorage.getItem(JOB_OUTREACH_GOAL_KEY);
+    if (!raw) return 5;
+    const num = parseInt(raw, 10);
+    return isNaN(num) || num < 1 ? 5 : num;
+  } catch {
+    return 5;
+  }
+}
+
+export function saveOutreachDailyGoalToStorage(goal: number): void {
+  try {
+    localStorage.setItem(JOB_OUTREACH_GOAL_KEY, goal.toString());
+  } catch (err) {
+    console.error('Failed to save outreach daily goal to storage:', err);
   }
 }
 

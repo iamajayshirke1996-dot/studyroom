@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronDown,
   Lock,
+  Briefcase,
 } from 'lucide-react';
 import { useStudy } from '../context/StudyContext';
 import { useTheme } from '../context/ThemeContext';
@@ -77,6 +78,7 @@ export const Navbar: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'topics', label: 'Courses', icon: BookOpen },
     { id: 'timeline', label: 'Timeline', icon: CalendarDays },
+    { id: 'jobs', label: 'Job Tracker', icon: Briefcase },
     ...(isMaangAuthorized ? [{ id: 'maang', label: 'MAANG Prep', icon: Flame }] : []),
     { id: 'summary', label: 'Summaries', icon: Brain },
   ];

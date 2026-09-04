@@ -11,7 +11,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { LearningGoal, StudySession, MaangWeek, DailySteps } from '../types';
+import { LearningGoal, StudySession, MaangWeek, DailySteps, JobOutreach } from '../types';
 
 /**
  * Remove undefined fields recursively because Firestore rejects undefined values
@@ -293,6 +293,49 @@ export function subscribeToStepHistory(
     },
     (err) => {
       console.warn('Firestore step history sync error:', err);
+    }
+  );
+}
+
+export async function saveJobOutreachToFirestore(userId: string, outreach: JobOutreach): Promise<void> {
+  if (!isCloudEligibleUser(userId)) return;
+  try {
+    const docRef = doc(db, 'users', userId, 'jobOutreaches', outreach.id);
+    await setDoc(docRef, cleanFirestoreData(outreach), { merge: true });
+  } catch (error) {
+    console.warn('Could not save job outreach to Firestore:', error);
+  }
+}
+
+export async function deleteJobOutreachFromFirestore(userId: string, outreachId: string): Promise<void> {
+  if (!isCloudEligibleUser(userId)) return;
+  try {
+    const docRef = doc(db, 'users', userId, 'jobOutreaches', outreachId);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.warn('Could not delete job outreach from Firestore:', error);
+  }
+}
+
+export function subscribeToJobOutreaches(
+  userId: string,
+  onUpdate: (outreaches: JobOutreach[]) => void
+): () => void {
+  if (!isCloudEligibleUser(userId)) return () => {};
+
+  const colRef = collection(db, 'users', userId, 'jobOutreaches');
+  const q = query(colRef, orderBy('createdAt', 'desc'));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const list: JobOutreach[] = [];
+      snapshot.forEach((d) => {
+        list.push(d.data() as JobOutreach);
+      });
+      onUpdate(list);
+    },
+    (err) => {
+      console.warn('Firestore job outreaches sync error:', err);
     }
   );
 }

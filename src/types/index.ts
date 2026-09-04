@@ -149,3 +149,54 @@ export interface DailySteps {
   caloriesBurned?: number;
   activeMinutes?: number;
 }
+
+export type OutreachPlatform =
+  | 'linkedin'
+  | 'cold_email'
+  | 'twitter'
+  | 'wellfound'
+  | 'yc'
+  | 'referral'
+  | 'careers_portal'
+  | 'other';
+
+export type OutreachType =
+  | 'job_application'
+  | 'cold_email'
+  | 'cold_dm'
+  | 'referral_request';
+
+export type OutreachStatus =
+  | 'applied'
+  | 'replied'
+  | 'interviewing'
+  | 'offer'
+  | 'rejected';
+
+export interface JobOutreach {
+  id: string;
+  companyName: string;
+  role: string;
+  platform: OutreachPlatform;
+  type: OutreachType;
+  status: OutreachStatus;
+  appliedDate: string; // YYYY-MM-DD
+  contactName?: string;
+  contactHandle?: string;
+  jobUrl?: string;
+  salary?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OutreachStats {
+  currentStreak: number;
+  todayCount: number;
+  dailyGoal: number;
+  totalApplications: number;
+  repliedCount: number;
+  interviewingCount: number;
+  offerCount: number;
+  responseRate: number;
+}

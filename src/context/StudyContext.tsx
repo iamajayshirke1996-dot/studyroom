@@ -9,6 +9,8 @@ import {
   TopicType,
   MaangWeek,
   DailySteps,
+  JobOutreach,
+  OutreachStats,
 } from '../types';
 import {
   loadGoalsFromStorage,
@@ -22,6 +24,10 @@ import {
   loadStepHistoryFromStorage,
   saveStepHistoryToStorage,
   getLocalDateString,
+  loadJobOutreachesFromStorage,
+  saveJobOutreachesToStorage,
+  loadOutreachDailyGoalFromStorage,
+  saveOutreachDailyGoalToStorage,
   exportAppState,
   importAppState,
 } from '../utils/storage';
@@ -38,6 +44,9 @@ import {
   saveMaangWeekToFirestore,
   saveDailyStepsToFirestore,
   subscribeToStepHistory,
+  saveJobOutreachToFirestore,
+  deleteJobOutreachFromFirestore,
+  subscribeToJobOutreaches,
   migrateLocalDataToCloud,
   checkUserHasCloudData,
 } from '../services/firestoreService';
@@ -48,8 +57,8 @@ interface StudyContextType {
   sessions: StudySession[];
   maangWeeks: MaangWeek[];
   stats: StudyStats;
-  activeTab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang';
-  setActiveTab: (tab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang') => void;
+  activeTab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs';
+  setActiveTab: (tab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs') => void;
   filterOptions: FilterOptions;
   setFilterOptions: React.Dispatch<React.SetStateAction<FilterOptions>>;
   selectedGoalForModal: LearningGoal | null;
@@ -101,6 +110,19 @@ interface StudyContextType {
   setIsWatchSyncModalOpen: (open: boolean) => void;
   isHealthDashboardOpen: boolean;
   setIsHealthDashboardOpen: (open: boolean) => void;
+
+  // Job Application & Cold Outreach Tracker
+  jobOutreaches: JobOutreach[];
+  outreachDailyGoal: number;
+  outreachStats: OutreachStats;
+  isLogOutreachOpen: boolean;
+  setIsLogOutreachOpen: (open: boolean) => void;
+  editingOutreach: JobOutreach | null;
+  setEditingOutreach: (outreach: JobOutreach | null) => void;
+  addJobOutreach: (outreachData: Omit<JobOutreach, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateJobOutreach: (id: string, updates: Partial<JobOutreach>) => void;
+  deleteJobOutreach: (id: string) => void;
+  setOutreachDailyGoal: (goal: number) => void;
 }
 
 const StudyContext = createContext<StudyContextType | undefined>(undefined);
@@ -112,7 +134,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [goals, setGoals] = useState<LearningGoal[]>(() => loadGoalsFromStorage());
   const [sessions, setSessions] = useState<StudySession[]>(() => loadSessionsFromStorage());
   const [maangWeeks, setMaangWeeks] = useState<MaangWeek[]>(() => loadMaangWeeksFromStorage());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs'>('dashboard');
 
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     search: '',
@@ -136,6 +158,12 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Health Step Tracker State
   const [dailySteps, setDailySteps] = useState<DailySteps>(() => loadDailyStepsFromStorage());
   const [stepHistory, setStepHistory] = useState<Record<string, DailySteps>>(() => loadStepHistoryFromStorage());
+
+  // Job Application & Cold Outreach State
+  const [jobOutreaches, setJobOutreaches] = useState<JobOutreach[]>(() => loadJobOutreachesFromStorage());
+  const [outreachDailyGoal, setOutreachDailyGoalState] = useState<number>(() => loadOutreachDailyGoalFromStorage());
+  const [isLogOutreachOpen, setIsLogOutreachOpen] = useState(false);
+  const [editingOutreach, setEditingOutreach] = useState<JobOutreach | null>(null);
 
   const updateDailySteps = (steps: number, source: DailySteps['source'] = 'manual', deviceName?: string) => {
     const todayStr = getLocalDateString();
@@ -248,6 +276,97 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [dailySteps.date, isRealCloudUser, user]);
 
+  // Job Application & Outreach Actions
+  const addJobOutreach = (outreachData: Omit<JobOutreach, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newRecord: JobOutreach = {
+      ...outreachData,
+      id: `job-${Date.now()}`,
+      appliedDate: outreachData.appliedDate || getLocalDateString(),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const updated = [newRecord, ...jobOutreaches];
+    setJobOutreaches(updated);
+    saveJobOutreachesToStorage(updated);
+
+    if (isRealCloudUser && user) {
+      saveJobOutreachToFirestore(user.uid, newRecord).catch(console.error);
+    }
+  };
+
+  const updateJobOutreach = (id: string, updates: Partial<JobOutreach>) => {
+    const updated = jobOutreaches.map((item) => {
+      if (item.id === id) {
+        const merged = { ...item, ...updates, updatedAt: new Date().toISOString() };
+        if (isRealCloudUser && user) {
+          saveJobOutreachToFirestore(user.uid, merged).catch(console.error);
+        }
+        return merged;
+      }
+      return item;
+    });
+
+    setJobOutreaches(updated);
+    saveJobOutreachesToStorage(updated);
+  };
+
+  const deleteJobOutreach = (id: string) => {
+    const updated = jobOutreaches.filter((item) => item.id !== id);
+    setJobOutreaches(updated);
+    saveJobOutreachesToStorage(updated);
+
+    if (isRealCloudUser && user) {
+      deleteJobOutreachFromFirestore(user.uid, id).catch(console.error);
+    }
+  };
+
+  const setOutreachDailyGoal = (goal: number) => {
+    const val = Math.max(1, Math.round(goal));
+    setOutreachDailyGoalState(val);
+    saveOutreachDailyGoalToStorage(val);
+  };
+
+  // Outreach Stats & Streak Calculation
+  const outreachStats = useMemo<OutreachStats>(() => {
+    const todayStr = getLocalDateString();
+    const todayCount = jobOutreaches.filter((j) => j.appliedDate === todayStr).length;
+    const totalApplications = jobOutreaches.length;
+    const repliedCount = jobOutreaches.filter((j) => j.status === 'replied').length;
+    const interviewingCount = jobOutreaches.filter((j) => j.status === 'interviewing').length;
+    const offerCount = jobOutreaches.filter((j) => j.status === 'offer').length;
+
+    const positiveResponses = repliedCount + interviewingCount + offerCount;
+    const responseRate = totalApplications > 0 ? Math.round((positiveResponses / totalApplications) * 100) : 0;
+
+    // Calculate Outreach Streak (consecutive days with >= 1 job application / cold outreach)
+    const datesWithOutreach = new Set(jobOutreaches.map((j) => j.appliedDate));
+    let streak = 0;
+    const checkDate = new Date();
+
+    const todayHasOutreach = datesWithOutreach.has(getLocalDateString(checkDate));
+    if (!todayHasOutreach) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    while (datesWithOutreach.has(getLocalDateString(checkDate))) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    return {
+      currentStreak: streak,
+      todayCount,
+      dailyGoal: outreachDailyGoal,
+      totalApplications,
+      repliedCount,
+      interviewingCount,
+      offerCount,
+      responseRate,
+    };
+  }, [jobOutreaches, outreachDailyGoal]);
+
   const openEditGoalModal = (goal: LearningGoal) => {
     setSelectedGoalForModal(goal);
     setIsAddGoalOpen(true);
@@ -327,11 +446,19 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
 
+    const unsubJobs = subscribeToJobOutreaches(user.uid, (cloudJobs) => {
+      if (cloudJobs && cloudJobs.length > 0) {
+        setJobOutreaches(cloudJobs);
+        saveJobOutreachesToStorage(cloudJobs);
+      }
+    });
+
     return () => {
       unsubGoals();
       unsubSessions();
       unsubWeeks();
       unsubSteps();
+      unsubJobs();
     };
   }, [isRealCloudUser, user]);
 
@@ -893,6 +1020,17 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsWatchSyncModalOpen,
         isHealthDashboardOpen,
         setIsHealthDashboardOpen,
+        jobOutreaches,
+        outreachDailyGoal,
+        outreachStats,
+        isLogOutreachOpen,
+        setIsLogOutreachOpen,
+        editingOutreach,
+        setEditingOutreach,
+        addJobOutreach,
+        updateJobOutreach,
+        deleteJobOutreach,
+        setOutreachDailyGoal,
       }}
     >
       {children}
