@@ -187,19 +187,17 @@ export const DashboardView: React.FC = () => {
           🌟 All Overview
         </button>
 
-        {isMaangAuthorized && (
-          <button
-            onClick={() => setDashboardFocus('maang')}
-            className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
-              dashboardFocus === 'maang'
-                ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-slate-950 font-bold shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
-            }`}
-          >
-            <Flame className="h-3.5 w-3.5 fill-current" />
-            <span>MAANG 3-Month Sprint</span>
-          </button>
-        )}
+        <button
+          onClick={() => setDashboardFocus('maang')}
+          className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+            dashboardFocus === 'maang'
+              ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-slate-950 font-bold shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-300'
+          }`}
+        >
+          <Flame className="h-3.5 w-3.5 fill-current" />
+          <span>MAANG 3-Month Sprint</span>
+        </button>
 
         <button
           onClick={() => setDashboardFocus('dsa')}
@@ -226,8 +224,8 @@ export const DashboardView: React.FC = () => {
         </button>
       </div>
 
-      {/* MAANG Sprint Widget (Only shown if authorized) */}
-      {isMaangAuthorized && (dashboardFocus === 'all' || dashboardFocus === 'maang') && <MaangDashboardWidget />}
+      {/* MAANG Sprint Widget */}
+      {(dashboardFocus === 'all' || dashboardFocus === 'maang') && <MaangDashboardWidget />}
 
       {/* Spaced Repetition Prompt (Shown on 'all' and 'recap') */}
       {(dashboardFocus === 'all' || dashboardFocus === 'recap') && <SpacedRepetitionPrompt />}

@@ -226,20 +226,58 @@ export async function fetchAndSyncFromGoogleSheet(
 ): Promise<MaangWeek[]> {
   const exportUrl = convertToCsvExportUrl(sheetOrCsvUrl);
 
-  const response = await fetch(exportUrl, {
-    method: 'GET',
-    headers: {
-      Accept: 'text/csv, text/plain, */*',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch spreadsheet (${response.status}: ${response.statusText}). Make sure your Google Sheet is shared as "Anyone with the link can view".`);
+  // Construct gviz endpoint candidate if possible
+  let gvizUrl: string | null = null;
+  const match = sheetOrCsvUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) {
+    const sheetId = match[1];
+    let gid = '0';
+    try {
+      const parsed = new URL(sheetOrCsvUrl);
+      if (parsed.searchParams.get('gid')) gid = parsed.searchParams.get('gid')!;
+      else if (parsed.hash && parsed.hash.includes('gid=')) {
+        const gm = parsed.hash.match(/gid=([0-9]+)/);
+        if (gm) gid = gm[1];
+      }
+    } catch {}
+    gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
   }
 
-  const csvText = await response.text();
+  // Candidates list to bypass browser CORS redirects
+  const candidates: string[] = [];
+  if (gvizUrl) candidates.push(gvizUrl);
+  candidates.push(exportUrl);
+  candidates.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`);
+  candidates.push(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(exportUrl)}`);
+
+  let csvText = '';
+  let lastError: string | null = null;
+
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'text/csv, text/plain, */*',
+        },
+      });
+
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 50 && (text.includes('Week') || text.includes('Phase') || text.includes(','))) {
+          csvText = text;
+          break;
+        }
+      }
+    } catch (err: any) {
+      lastError = err.message || 'CORS restriction';
+    }
+  }
+
   if (!csvText || csvText.trim().length < 50) {
-    throw new Error('Spreadsheet returned empty or invalid content. Verify the link and sheet permissions.');
+    throw new Error(
+      `CORS / Network restriction: Google Sheets export URLs block client-side browser fetch. Click "Download Sheet CSV" or paste the CSV content below for instant 1-click sync!`
+    );
   }
 
   return parseMaangWeeksFromCsv(csvText, existingWeeks);
