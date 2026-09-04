@@ -54,9 +54,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'topics' && <TopicsListView />}
         {activeTab === 'timeline' && <TimelineView />}
         {activeTab === 'jobs' && <JobTrackerView />}
-        {activeTab === 'maang' && (
-          canAccessMaangPrep(user?.email) ? <MaangRoadmapView /> : <MaangAccessDeniedView />
-        )}
+        {activeTab === 'maang' && <MaangRoadmapView />}
         {activeTab === 'summary' && <SummaryHubView />}
       </main>
 
