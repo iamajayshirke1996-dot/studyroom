@@ -9,6 +9,8 @@ import { TopicsListView } from './components/Topics/TopicsListView';
 import { TimelineView } from './components/Timeline/TimelineView';
 import { SummaryHubView } from './components/Summary/SummaryHubView';
 import { MaangRoadmapView } from './components/MaangRoadmap/MaangRoadmapView';
+import { JobTrackerView } from './components/JobTracker/JobTrackerView';
+import { LogOutreachModal } from './components/JobTracker/LogOutreachModal';
 import { AddEditGoalModal } from './components/Modals/AddEditGoalModal';
 import { LogStudyModal } from './components/Modals/LogStudyModal';
 import { TopicSummaryModal } from './components/Summary/TopicSummaryModal';
@@ -51,6 +53,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'topics' && <TopicsListView />}
         {activeTab === 'timeline' && <TimelineView />}
+        {activeTab === 'jobs' && <JobTrackerView />}
         {activeTab === 'maang' && (
           canAccessMaangPrep(user?.email) ? <MaangRoadmapView /> : <MaangAccessDeniedView />
         )}
@@ -66,6 +69,7 @@ const AppContent: React.FC = () => {
       <MiniTimerWidget />
       <RealmeWatchSyncModal />
       <HealthAnalyticsModal />
+      <LogOutreachModal />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white/80 dark:bg-slate-950/80 py-6 text-center text-xs text-slate-500 transition-colors">
