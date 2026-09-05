@@ -1,13 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Strict isolation: Users can only read and write their own documents & subcollections
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      match /{allSubcollections=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+    // User data collection (goals, sessions, maangWeeks, health, jobOutreaches, youtubeShorts)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Top-level users collection for Admin permissions directory
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // App Feature Permissions collection for Admin access control
+    match /appPermissions/{docId} {
+      allow read, write: if request.auth != null;
     }
   }
 }

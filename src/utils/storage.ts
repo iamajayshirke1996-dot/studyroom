@@ -1,4 +1,4 @@
-import { LearningGoal, StudySession, MaangWeek, DailySteps, JobOutreach } from '../types';
+import { LearningGoal, StudySession, MaangWeek, DailySteps, JobOutreach, YoutubeShort, UserFeaturePermissions } from '../types';
 import { INITIAL_GOALS, INITIAL_STUDY_SESSIONS } from './initialData';
 import { INITIAL_MAANG_WEEKS } from './maangData';
 
@@ -9,6 +9,9 @@ const STEPS_STORAGE_KEY = 'studypulse_steps_v1';
 const STEP_HISTORY_STORAGE_KEY = 'studypulse_step_history_v1';
 const JOB_OUTREACH_STORAGE_KEY = 'studypulse_job_outreach_v1';
 const JOB_OUTREACH_GOAL_KEY = 'studypulse_job_outreach_goal_v1';
+const SHORTS_STORAGE_KEY = 'studypulse_youtube_shorts_v1';
+const SHORTS_GOAL_KEY = 'studypulse_shorts_goal_v1';
+const PERMISSIONS_STORAGE_KEY = 'studypulse_user_permissions_v1';
 
 export function loadGoalsFromStorage(): LearningGoal[] {
   try {
@@ -296,6 +299,147 @@ export function saveOutreachDailyGoalToStorage(goal: number): void {
     localStorage.setItem(JOB_OUTREACH_GOAL_KEY, goal.toString());
   } catch (err) {
     console.error('Failed to save outreach daily goal to storage:', err);
+  }
+}
+
+export function getInitialShorts(): YoutubeShort[] {
+  const todayStr = getLocalDateString();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = getLocalDateString(yesterday);
+
+  return [
+    {
+      id: 'short-1',
+      title: 'JavaScript Closures Explained in 30 Seconds 🚀',
+      platform: 'youtube_shorts',
+      status: 'uploaded',
+      uploadDate: todayStr,
+      videoUrl: 'https://youtube.com/shorts/sample1',
+      niche: 'Web Development',
+      views: 1450,
+      likes: 182,
+      notes: 'Great hook in first 3s. Highlighted lexical scoping.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'short-2',
+      title: '5 Git Commands You Wish You Knew Earlier 🔥',
+      platform: 'reels',
+      status: 'uploaded',
+      uploadDate: yesterdayStr,
+      videoUrl: 'https://instagram.com/reels/sample2',
+      niche: 'Developer Productivity',
+      views: 3820,
+      likes: 410,
+      notes: 'Included animated code overlays.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'short-3',
+      title: 'How Sliding Window Algorithm Works in 60s 💡',
+      platform: 'youtube_shorts',
+      status: 'edited',
+      uploadDate: todayStr,
+      niche: 'DSA & LeetCode',
+      notes: 'Edited in CapCut with captions and sound effects. Ready to publish.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'short-4',
+      title: 'React 19 Server Components Explained Simply',
+      platform: 'youtube_shorts',
+      status: 'recorded',
+      uploadDate: todayStr,
+      niche: 'Frontend Tech',
+      notes: 'Raw A-roll shot. Needs editing and text highlights.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'short-5',
+      title: 'Why Every Developer Needs a Study Dashboard',
+      platform: 'tiktok',
+      status: 'idea',
+      uploadDate: todayStr,
+      niche: 'Build in Public',
+      notes: 'Script hook: How I stay consistent with study streak + job application tracker.',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+}
+
+export function loadShortsFromStorage(): YoutubeShort[] {
+  try {
+    const raw = localStorage.getItem(SHORTS_STORAGE_KEY);
+    if (!raw) {
+      const initial = getInitialShorts();
+      saveShortsToStorage(initial);
+      return initial;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : getInitialShorts();
+  } catch {
+    return getInitialShorts();
+  }
+}
+
+export function saveShortsToStorage(shorts: YoutubeShort[]): void {
+  try {
+    localStorage.setItem(SHORTS_STORAGE_KEY, JSON.stringify(shorts));
+  } catch (err) {
+    console.error('Failed to save shorts to storage:', err);
+  }
+}
+
+export function loadShortsDailyGoalFromStorage(): number {
+  try {
+    const raw = localStorage.getItem(SHORTS_GOAL_KEY);
+    if (!raw) return 1;
+    const num = parseInt(raw, 10);
+    return isNaN(num) || num < 1 ? 1 : num;
+  } catch {
+    return 1;
+  }
+}
+
+export function saveShortsDailyGoalToStorage(goal: number): void {
+  try {
+    localStorage.setItem(SHORTS_GOAL_KEY, goal.toString());
+  } catch (err) {
+    console.error('Failed to save shorts daily goal to storage:', err);
+  }
+}
+
+export function loadUserPermissionsFromStorage(): Record<string, UserFeaturePermissions> {
+  try {
+    const raw = localStorage.getItem(PERMISSIONS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'object' && parsed !== null) {
+      const cleaned: Record<string, UserFeaturePermissions> = {};
+      Object.keys(parsed).forEach((k) => {
+        if (!k.includes('@studyroom.app') && !k.includes('guest.user') && !k.includes('student.learner')) {
+          cleaned[k] = parsed[k];
+        }
+      });
+      return cleaned;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveUserPermissionsToStorage(perms: Record<string, UserFeaturePermissions>): void {
+  try {
+    localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(perms));
+  } catch (err) {
+    console.error('Failed to save user permissions to storage:', err);
   }
 }
 

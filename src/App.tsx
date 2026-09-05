@@ -10,6 +10,8 @@ import { TimelineView } from './components/Timeline/TimelineView';
 import { SummaryHubView } from './components/Summary/SummaryHubView';
 import { MaangRoadmapView } from './components/MaangRoadmap/MaangRoadmapView';
 import { JobTrackerView } from './components/JobTracker/JobTrackerView';
+import { YoutubeShortsView } from './components/YoutubeShorts/YoutubeShortsView';
+import { AdminDashboardView } from './components/Admin/AdminDashboardView';
 import { LogOutreachModal } from './components/JobTracker/LogOutreachModal';
 import { AddEditGoalModal } from './components/Modals/AddEditGoalModal';
 import { LogStudyModal } from './components/Modals/LogStudyModal';
@@ -24,9 +26,11 @@ import { canAccessMaangPrep } from './utils/authPermissions';
 import { TimerProvider } from './context/TimerContext';
 import { GraduationCap } from 'lucide-react';
 
+import { hasFeatureAccess, isAdminEmail } from './utils/featureFlags';
+
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const { activeTab } = useStudy();
+  const { activeTab, currentUserPermissions } = useStudy();
 
   if (loading) {
     return (
@@ -44,6 +48,11 @@ const AppContent: React.FC = () => {
     return <LoginPage />;
   }
 
+  const canAccessJobs = hasFeatureAccess(currentUserPermissions, 'jobTracker', user?.email);
+  const canAccessShorts = hasFeatureAccess(currentUserPermissions, 'youtubeShorts', user?.email);
+  const canAccessMaang = hasFeatureAccess(currentUserPermissions, 'maangPrep', user?.email);
+  const canAccessAdmin = currentUserPermissions?.isAdmin || isAdminEmail(user?.email);
+
   // If user is authenticated, render their personal study room
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-200">
@@ -53,9 +62,11 @@ const AppContent: React.FC = () => {
         {activeTab === 'dashboard' && <DashboardView />}
         {activeTab === 'topics' && <TopicsListView />}
         {activeTab === 'timeline' && <TimelineView />}
-        {activeTab === 'jobs' && <JobTrackerView />}
-        {activeTab === 'maang' && <MaangRoadmapView />}
+        {activeTab === 'jobs' && (canAccessJobs ? <JobTrackerView /> : <DashboardView />)}
+        {activeTab === 'shorts' && (canAccessShorts ? <YoutubeShortsView /> : <DashboardView />)}
+        {activeTab === 'maang' && (canAccessMaang ? <MaangRoadmapView /> : <DashboardView />)}
         {activeTab === 'summary' && <SummaryHubView />}
+        {activeTab === 'admin' && (canAccessAdmin ? <AdminDashboardView /> : <DashboardView />)}
       </main>
 
       {/* Global Modals */}

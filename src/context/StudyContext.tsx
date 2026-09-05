@@ -11,6 +11,9 @@ import {
   DailySteps,
   JobOutreach,
   OutreachStats,
+  YoutubeShort,
+  ShortsStats,
+  UserFeaturePermissions,
 } from '../types';
 import {
   loadGoalsFromStorage,
@@ -28,12 +31,19 @@ import {
   saveJobOutreachesToStorage,
   loadOutreachDailyGoalFromStorage,
   saveOutreachDailyGoalToStorage,
+  loadShortsFromStorage,
+  saveShortsToStorage,
+  loadShortsDailyGoalFromStorage,
+  saveShortsDailyGoalToStorage,
+  loadUserPermissionsFromStorage,
+  saveUserPermissionsToStorage,
   exportAppState,
   importAppState,
 } from '../utils/storage';
 import { INITIAL_GOALS, INITIAL_STUDY_SESSIONS } from '../utils/initialData';
 import { INITIAL_MAANG_WEEKS } from '../utils/maangData';
 import { useAuth } from './AuthContext';
+import { getDefaultPermissions } from '../utils/featureFlags';
 import {
   subscribeToGoals,
   saveGoalToFirestore,
@@ -47,6 +57,12 @@ import {
   saveJobOutreachToFirestore,
   deleteJobOutreachFromFirestore,
   subscribeToJobOutreaches,
+  saveShortToFirestore,
+  deleteShortFromFirestore,
+  subscribeToShorts,
+  saveUserPermissionsToFirestore,
+  deleteUserPermissionsFromFirestore,
+  subscribeToAllPermissions,
   migrateLocalDataToCloud,
   checkUserHasCloudData,
 } from '../services/firestoreService';
@@ -57,8 +73,8 @@ interface StudyContextType {
   sessions: StudySession[];
   maangWeeks: MaangWeek[];
   stats: StudyStats;
-  activeTab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs';
-  setActiveTab: (tab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs') => void;
+  activeTab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs' | 'shorts' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs' | 'shorts' | 'admin') => void;
   filterOptions: FilterOptions;
   setFilterOptions: React.Dispatch<React.SetStateAction<FilterOptions>>;
   selectedGoalForModal: LearningGoal | null;
@@ -123,6 +139,25 @@ interface StudyContextType {
   updateJobOutreach: (id: string, updates: Partial<JobOutreach>) => void;
   deleteJobOutreach: (id: string) => void;
   setOutreachDailyGoal: (goal: number) => void;
+
+  // YouTube Shorts Upload Dashboard
+  youtubeShorts: YoutubeShort[];
+  shortsDailyGoal: number;
+  shortsStats: ShortsStats;
+  isLogShortOpen: boolean;
+  setIsLogShortOpen: (open: boolean) => void;
+  editingShort: YoutubeShort | null;
+  setEditingShort: (short: YoutubeShort | null) => void;
+  addYoutubeShort: (shortData: Omit<YoutubeShort, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateYoutubeShort: (id: string, updates: Partial<YoutubeShort>) => void;
+  deleteYoutubeShort: (id: string) => void;
+  setShortsDailyGoal: (goal: number) => void;
+
+  // Access Control & User Permissions
+  userPermissionsMap: Record<string, UserFeaturePermissions>;
+  currentUserPermissions: UserFeaturePermissions;
+  updateUserPermissions: (perms: UserFeaturePermissions) => void;
+  deleteUserPermissions: (email: string) => void;
 }
 
 const StudyContext = createContext<StudyContextType | undefined>(undefined);
@@ -134,7 +169,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [goals, setGoals] = useState<LearningGoal[]>(() => loadGoalsFromStorage());
   const [sessions, setSessions] = useState<StudySession[]>(() => loadSessionsFromStorage());
   const [maangWeeks, setMaangWeeks] = useState<MaangWeek[]>(() => loadMaangWeeksFromStorage());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'timeline' | 'summary' | 'maang' | 'jobs' | 'shorts' | 'admin'>('dashboard');
 
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     search: '',
@@ -164,6 +199,133 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [outreachDailyGoal, setOutreachDailyGoalState] = useState<number>(() => loadOutreachDailyGoalFromStorage());
   const [isLogOutreachOpen, setIsLogOutreachOpen] = useState(false);
   const [editingOutreach, setEditingOutreach] = useState<JobOutreach | null>(null);
+
+  // YouTube Shorts State
+  const [youtubeShorts, setYoutubeShorts] = useState<YoutubeShort[]>(() => loadShortsFromStorage());
+  const [shortsDailyGoal, setShortsDailyGoalState] = useState<number>(() => loadShortsDailyGoalFromStorage());
+  const [isLogShortOpen, setIsLogShortOpen] = useState(false);
+  const [editingShort, setEditingShort] = useState<YoutubeShort | null>(null);
+
+  // User Permissions State
+  const [userPermissionsMap, setUserPermissionsMap] = useState<Record<string, UserFeaturePermissions>>(() => loadUserPermissionsFromStorage());
+
+  const currentUserPermissions = useMemo(() => {
+    const email = user?.email || '';
+    if (email && userPermissionsMap[email.toLowerCase()]) {
+      return userPermissionsMap[email.toLowerCase()];
+    }
+    return getDefaultPermissions(email);
+  }, [user, userPermissionsMap]);
+
+  const updateUserPermissions = (perms: UserFeaturePermissions) => {
+    if (!perms.email) return;
+    const emailKey = perms.email.toLowerCase();
+    const updatedMap = {
+      ...userPermissionsMap,
+      [emailKey]: perms,
+    };
+    setUserPermissionsMap(updatedMap);
+    saveUserPermissionsToStorage(updatedMap);
+    saveUserPermissionsToFirestore(perms).catch(console.error);
+  };
+
+  const deleteUserPermissions = (email: string) => {
+    if (!email) return;
+    const emailKey = email.toLowerCase();
+    setUserPermissionsMap((prev) => {
+      const copy = { ...prev };
+      delete copy[emailKey];
+      saveUserPermissionsToStorage(copy);
+      return copy;
+    });
+    deleteUserPermissionsFromFirestore(email).catch(console.error);
+  };
+
+  const addYoutubeShort = (shortData: Omit<YoutubeShort, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newShort: YoutubeShort = {
+      ...shortData,
+      id: `short-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    setYoutubeShorts((prev) => {
+      const next = [newShort, ...prev];
+      saveShortsToStorage(next);
+      return next;
+    });
+
+    if (isRealCloudUser && user) {
+      saveShortToFirestore(user.uid, newShort).catch(console.error);
+    }
+  };
+
+  const updateYoutubeShort = (id: string, updates: Partial<YoutubeShort>) => {
+    setYoutubeShorts((prev) => {
+      const next = prev.map((s) => {
+        if (s.id === id) {
+          const updated = { ...s, ...updates, updatedAt: new Date().toISOString() };
+          if (isRealCloudUser && user) {
+            saveShortToFirestore(user.uid, updated).catch(console.error);
+          }
+          return updated;
+        }
+        return s;
+      });
+      saveShortsToStorage(next);
+      return next;
+    });
+  };
+
+  const deleteYoutubeShort = (id: string) => {
+    setYoutubeShorts((prev) => {
+      const next = prev.filter((s) => s.id !== id);
+      saveShortsToStorage(next);
+      return next;
+    });
+
+    if (isRealCloudUser && user) {
+      deleteShortFromFirestore(user.uid, id).catch(console.error);
+    }
+  };
+
+  const setShortsDailyGoal = (goal: number) => {
+    const validGoal = Math.max(1, Math.round(goal));
+    setShortsDailyGoalState(validGoal);
+    saveShortsDailyGoalToStorage(validGoal);
+  };
+
+  // Shorts Stats Calculation
+  const shortsStats = useMemo<ShortsStats>(() => {
+    const todayStr = getLocalDateString();
+    const uploaded = youtubeShorts.filter((s) => s.status === 'uploaded');
+    const todayCount = uploaded.filter((s) => s.uploadDate === todayStr).length;
+    const totalUploaded = uploaded.length;
+    const totalViews = youtubeShorts.reduce((acc, s) => acc + (s.views || 0), 0);
+
+    const datesWithUploaded = new Set(uploaded.map((s) => s.uploadDate));
+    let streak = 0;
+    const checkDate = new Date();
+
+    const todayHasUploaded = datesWithUploaded.has(getLocalDateString(checkDate));
+    if (!todayHasUploaded) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    while (datesWithUploaded.has(getLocalDateString(checkDate))) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    return {
+      currentStreak: streak,
+      todayCount,
+      dailyGoal: shortsDailyGoal,
+      totalUploaded,
+      totalViews,
+    };
+  }, [youtubeShorts, shortsDailyGoal]);
 
   const updateDailySteps = (steps: number, source: DailySteps['source'] = 'manual', deviceName?: string) => {
     const todayStr = getLocalDateString();
@@ -453,14 +615,36 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
 
+    const unsubShorts = subscribeToShorts(user.uid, (cloudShorts) => {
+      if (cloudShorts && cloudShorts.length > 0) {
+        setYoutubeShorts(cloudShorts);
+        saveShortsToStorage(cloudShorts);
+      }
+    });
+
     return () => {
       unsubGoals();
       unsubSessions();
       unsubWeeks();
       unsubSteps();
       unsubJobs();
+      unsubShorts();
     };
   }, [isRealCloudUser, user]);
+
+  // Realtime subscription for global permissions
+  useEffect(() => {
+    const unsub = subscribeToAllPermissions((cloudMap) => {
+      if (cloudMap && Object.keys(cloudMap).length > 0) {
+        setUserPermissionsMap((prev) => {
+          const merged = { ...prev, ...cloudMap };
+          saveUserPermissionsToStorage(merged);
+          return merged;
+        });
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Compute overall stats
   const stats = useMemo<StudyStats>(() => {
@@ -1031,6 +1215,21 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateJobOutreach,
         deleteJobOutreach,
         setOutreachDailyGoal,
+        youtubeShorts,
+        shortsDailyGoal,
+        shortsStats,
+        isLogShortOpen,
+        setIsLogShortOpen,
+        editingShort,
+        setEditingShort,
+        addYoutubeShort,
+        updateYoutubeShort,
+        deleteYoutubeShort,
+        setShortsDailyGoal,
+        userPermissionsMap,
+        currentUserPermissions,
+        updateUserPermissions,
+        deleteUserPermissions,
       }}
     >
       {children}

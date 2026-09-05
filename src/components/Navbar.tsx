@@ -18,12 +18,14 @@ import {
   ChevronDown,
   Lock,
   Briefcase,
+  Video,
+  ShieldCheck,
 } from 'lucide-react';
 import { useStudy } from '../context/StudyContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useTimer } from '../context/TimerContext';
-import { canAccessMaangPrep } from '../utils/authPermissions';
+import { hasFeatureAccess } from '../utils/featureFlags';
 
 export const Navbar: React.FC = () => {
   const {
@@ -35,6 +37,7 @@ export const Navbar: React.FC = () => {
     exportData,
     importData,
     resetToDefaultData,
+    currentUserPermissions,
   } = useStudy();
 
   const { isRunning: isTimerRunning, formattedTime } = useTimer();
@@ -72,15 +75,23 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const isMaangAuthorized = canAccessMaangPrep(user?.email);
-
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'topics', label: 'Courses', icon: BookOpen },
     { id: 'timeline', label: 'Timeline', icon: CalendarDays },
-    { id: 'jobs', label: 'Job Tracker', icon: Briefcase },
-    ...(isMaangAuthorized ? [{ id: 'maang', label: 'MAANG Prep', icon: Flame }] : []),
+    ...(hasFeatureAccess(currentUserPermissions, 'jobTracker', user?.email)
+      ? [{ id: 'jobs', label: 'Job Tracker', icon: Briefcase }]
+      : []),
+    ...(hasFeatureAccess(currentUserPermissions, 'youtubeShorts', user?.email)
+      ? [{ id: 'shorts', label: 'Shorts 🎬', icon: Video }]
+      : []),
+    ...(hasFeatureAccess(currentUserPermissions, 'maangPrep', user?.email)
+      ? [{ id: 'maang', label: 'MAANG Prep', icon: Flame }]
+      : []),
     { id: 'summary', label: 'Summaries', icon: Brain },
+    ...(currentUserPermissions?.isAdmin || (user?.email && user.email.toLowerCase() === 'iamajayshirke1996@gmail.com')
+      ? [{ id: 'admin', label: 'Admin ⚙️', icon: ShieldCheck }]
+      : []),
   ];
 
   return (

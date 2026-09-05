@@ -29,6 +29,7 @@ import { SpacedRepetitionPrompt } from './SpacedRepetitionPrompt';
 import { MaangDashboardWidget } from './MaangDashboardWidget';
 import { StepsTrackerWidget } from './StepsTrackerWidget';
 import { JobTrackerWidget } from './JobTrackerWidget';
+import { YoutubeShortsWidget } from './YoutubeShortsWidget';
 
 export const DashboardView: React.FC = () => {
   const {
@@ -507,8 +508,9 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 1 Column: Job Outreach, Steps & Recent Activity Feed */}
+        {/* Right 1 Column: Shorts, Job Outreach, Steps & Recent Activity Feed */}
         <div className="lg:col-span-1 space-y-6">
+          <YoutubeShortsWidget />
           <JobTrackerWidget />
           <StepsTrackerWidget />
           <RecentActivityWidget />

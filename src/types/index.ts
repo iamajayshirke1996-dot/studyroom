@@ -200,3 +200,42 @@ export interface OutreachStats {
   offerCount: number;
   responseRate: number;
 }
+
+export type ShortPlatform = 'youtube_shorts' | 'reels' | 'tiktok' | 'linkedin_video';
+
+export type ContentStatus = 'idea' | 'scripted' | 'recorded' | 'edited' | 'uploaded';
+
+export interface YoutubeShort {
+  id: string;
+  title: string;
+  platform: ShortPlatform;
+  status: ContentStatus;
+  uploadDate: string; // YYYY-MM-DD
+  videoUrl?: string;
+  niche?: string;
+  views?: number;
+  likes?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShortsStats {
+  currentStreak: number;
+  todayCount: number;
+  dailyGoal: number;
+  totalUploaded: number;
+  totalViews: number;
+}
+
+export interface UserFeaturePermissions {
+  email: string;
+  isAdmin: boolean;
+  features: {
+    maangPrep: boolean;
+    stepsTracker: boolean;
+    jobTracker: boolean;
+    youtubeShorts: boolean;
+  };
+  updatedAt?: string;
+}
