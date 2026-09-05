@@ -96,11 +96,11 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/90 backdrop-blur-md transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-2">
           {/* Left: Clean Brand Logo */}
           <div
-            className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
+            className="flex items-center gap-2 cursor-pointer select-none group shrink-0"
             onClick={() => setActiveTab('dashboard')}
           >
             <div
@@ -109,19 +109,22 @@ export const Navbar: React.FC = () => {
             >
               <GraduationCap className="h-5 w-5" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">
                 StudyPulse
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="hidden xl:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Cloud
               </span>
             </div>
           </div>
 
-          {/* Center: Sleek, Flat Tabs (Single-Line, No Wrapping) */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+          {/* Center: Sleek Responsive Tabs (Scrollable if viewport is tight) */}
+          <nav
+            className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 min-w-0 max-w-fit mx-2 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -130,7 +133,7 @@ export const Navbar: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as any)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                     isActive
                       ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -148,10 +151,10 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right: Clean, Unified Utility Hub */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
             {/* Minimalist Streak Counter */}
             <div
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20 cursor-default"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold border border-amber-500/20 cursor-default shrink-0"
               title={`Current Streak: ${stats.currentStreak} day(s)`}
             >
               <Flame className="h-4 w-4 text-amber-500 fill-current" />
@@ -161,7 +164,7 @@ export const Navbar: React.FC = () => {
             {/* Pomodoro Focus Timer Button */}
             <button
               onClick={() => setIsPomodoroOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shrink-0 ${
                 isTimerRunning
                   ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40 shadow-xs'
                   : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800'
@@ -169,13 +172,13 @@ export const Navbar: React.FC = () => {
               title={isTimerRunning ? `Focus session active: ${formattedTime} remaining. Click to open timer.` : 'Open Pomodoro Focus Timer'}
             >
               <Timer className={`h-3.5 w-3.5 ${isTimerRunning ? 'text-amber-500 animate-pulse' : 'text-indigo-500'}`} />
-              <span className="font-mono">{isTimerRunning ? formattedTime : 'Focus'}</span>
+              <span className="font-mono hidden lg:inline">{isTimerRunning ? formattedTime : 'Focus'}</span>
             </button>
 
             {/* Primary Action: New Goal */}
             <button
               onClick={() => setIsAddGoalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] shrink-0"
               style={{ backgroundColor: currentTheme.primary }}
               title="Add a new course, video series, or roadmap goal"
             >
@@ -186,7 +189,7 @@ export const Navbar: React.FC = () => {
             {/* Dark / Light Mode Toggle */}
             <button
               onClick={toggleLightDark}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors shrink-0"
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {isDark ? (
@@ -198,7 +201,7 @@ export const Navbar: React.FC = () => {
 
             {/* User Profile Avatar & Dropdown */}
             {user && (
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative shrink-0" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-1 p-0.5 rounded-full hover:ring-2 hover:ring-slate-200 dark:hover:ring-slate-800 transition-all focus:outline-none"
@@ -311,7 +314,10 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Navigation bar */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-slate-200 dark:border-slate-800/80">
+        <div
+          className="flex md:hidden items-center gap-1.5 py-2 px-1 overflow-x-auto border-t border-slate-200 dark:border-slate-800/80"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -319,10 +325,10 @@ export const Navbar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`flex flex-col items-center text-[11px] transition-colors ${
+                className={`flex flex-col items-center justify-center shrink-0 px-3 py-1 rounded-xl text-[11px] font-medium whitespace-nowrap transition-colors min-w-[64px] ${
                   isActive
-                    ? 'font-bold'
-                    : 'text-slate-500 dark:text-slate-400'
+                    ? 'bg-slate-100 dark:bg-slate-800/80 font-bold'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900'
                 }`}
                 style={isActive ? { color: currentTheme.primary } : {}}
               >
