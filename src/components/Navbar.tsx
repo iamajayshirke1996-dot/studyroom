@@ -25,7 +25,7 @@ import { useStudy } from '../context/StudyContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useTimer } from '../context/TimerContext';
-import { hasFeatureAccess } from '../utils/featureFlags';
+import { hasFeatureAccess, isAdminEmail } from '../utils/featureFlags';
 
 export const Navbar: React.FC = () => {
   const {
@@ -89,7 +89,7 @@ export const Navbar: React.FC = () => {
       ? [{ id: 'maang', label: 'MAANG Prep', icon: Flame }]
       : []),
     { id: 'summary', label: 'Summaries', icon: Brain },
-    ...(currentUserPermissions?.isAdmin || (user?.email && user.email.toLowerCase() === 'iamajayshirke1996@gmail.com')
+    ...(currentUserPermissions?.isAdmin || isAdminEmail(user?.email)
       ? [{ id: 'admin', label: 'Admin ⚙️', icon: ShieldCheck }]
       : []),
   ];

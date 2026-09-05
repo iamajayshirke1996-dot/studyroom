@@ -4,6 +4,7 @@ import {
   setDoc,
   deleteDoc,
   onSnapshot,
+  getDoc,
   getDocs,
   writeBatch,
   query,
@@ -64,37 +65,55 @@ export async function syncUserProfile(user: {
     const userRef = doc(db, "users", user.uid);
     await setDoc(
       userRef,
-      {
+      cleanFirestoreData({
         uid: user.uid,
         email: user.email || null,
         displayName: user.displayName || "Learner",
         photoURL: user.photoURL || null,
         lastActiveAt: serverTimestamp(),
-      },
+      }),
       { merge: true },
     );
 
     if (user.email) {
       const emailDocId = user.email.toLowerCase().replace(/[^a-z0-9_]/g, "_");
       const permRef = doc(db, "appPermissions", emailDocId);
+      const permSnap = await getDoc(permRef);
       const isUserAdmin = isAdminEmail(user.email);
-      await setDoc(
-        permRef,
-        {
-          email: user.email,
-          displayName: user.displayName || undefined,
-          photoURL: user.photoURL || undefined,
-          isAdmin: isUserAdmin,
-          features: {
-            maangPrep: isUserAdmin,
-            stepsTracker: isUserAdmin,
-            jobTracker: isUserAdmin,
-            youtubeShorts: isUserAdmin,
-          },
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true },
-      );
+
+      if (permSnap.exists()) {
+        // Document exists: Update profile details only, DO NOT overwrite features set by Admin
+        await setDoc(
+          permRef,
+          cleanFirestoreData({
+            email: user.email,
+            displayName: user.displayName || undefined,
+            photoURL: user.photoURL || undefined,
+            isAdmin: isUserAdmin,
+            updatedAt: new Date().toISOString(),
+          }),
+          { merge: true },
+        );
+      } else {
+        // Document does not exist: Initialize user permissions
+        await setDoc(
+          permRef,
+          cleanFirestoreData({
+            email: user.email,
+            displayName: user.displayName || undefined,
+            photoURL: user.photoURL || undefined,
+            isAdmin: isUserAdmin,
+            features: {
+              maangPrep: isUserAdmin,
+              stepsTracker: isUserAdmin,
+              jobTracker: isUserAdmin,
+              youtubeShorts: isUserAdmin,
+            },
+            updatedAt: new Date().toISOString(),
+          }),
+          { merge: true },
+        );
+      }
     }
   } catch (err) {
     console.warn("Could not sync user profile to Firestore:", err);

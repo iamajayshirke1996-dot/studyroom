@@ -52,7 +52,7 @@ export const AdminDashboardView: React.FC = () => {
           Access Restricted
         </h2>
         <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-          The Admin Control Panel is reserved for platform administrators (<code className="text-indigo-600 dark:text-indigo-400">iamajayshirke1996@gmail.com</code>).
+          The Admin Control Panel is reserved for platform administrators.
         </p>
       </div>
     );
