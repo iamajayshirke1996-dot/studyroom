@@ -21,6 +21,7 @@ import { ThemeCustomizerModal } from './components/Theme/ThemeCustomizerModal';
 import { MiniTimerWidget } from './components/Modals/MiniTimerWidget';
 import { RealmeWatchSyncModal } from './components/Modals/RealmeWatchSyncModal';
 import { HealthAnalyticsModal } from './components/Modals/HealthAnalyticsModal';
+import { LinkedInShareModal } from './components/Modals/LinkedInShareModal';
 import { MaangAccessDeniedView } from './components/MaangRoadmap/MaangAccessDeniedView';
 import { canAccessMaangPrep } from './utils/authPermissions';
 import { TimerProvider } from './context/TimerContext';
@@ -79,6 +80,7 @@ const AppContent: React.FC = () => {
       <RealmeWatchSyncModal />
       <HealthAnalyticsModal />
       <LogOutreachModal />
+      <LinkedInShareModal />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-900 bg-white/80 dark:bg-slate-950/80 py-6 text-center text-xs text-slate-500 transition-colors">

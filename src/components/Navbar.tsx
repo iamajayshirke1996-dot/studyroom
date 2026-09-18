@@ -24,6 +24,7 @@ import {
   Briefcase,
   Video,
   ShieldCheck,
+  Share2,
 } from 'lucide-react';
 import { useStudy } from '../context/StudyContext';
 import { useTheme } from '../context/ThemeContext';
@@ -42,6 +43,7 @@ export const Navbar: React.FC = () => {
     importData,
     resetToDefaultData,
     currentUserPermissions,
+    openLinkedInShareModal,
   } = useStudy();
 
   const { isRunning: isTimerRunning, formattedTime } = useTimer();
@@ -398,6 +400,17 @@ export const Navbar: React.FC = () => {
 
                     {/* Preferences & Settings */}
                     <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openLinkedInShareModal();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#0A66C2] dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-xl text-left transition-colors"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Post What I Learnt (LinkedIn)</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setIsUserMenuOpen(false);

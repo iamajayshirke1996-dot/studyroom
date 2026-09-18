@@ -15,6 +15,7 @@ import {
   Video,
   Code2,
   ListTodo,
+  Share2,
 } from 'lucide-react';
 import { useStudy } from '../../context/StudyContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,6 +27,7 @@ export const SummaryHubView: React.FC = () => {
     goals,
     setSelectedSummaryGoal,
     recordTopicReview,
+    openLinkedInShareModal,
   } = useStudy();
 
   const { currentTheme } = useTheme();
@@ -122,6 +124,15 @@ export const SummaryHubView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3 relative z-10">
+          <button
+            onClick={() => openLinkedInShareModal()}
+            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0A66C2] hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center gap-2 hover:scale-[1.02]"
+            title="Create & Post What You Learnt to LinkedIn"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Post to LinkedIn</span>
+          </button>
+
           <button
             onClick={() => setIsFlashcardOpen(true)}
             className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-md shadow-purple-600/20 transition-all flex items-center gap-2 hover:scale-[1.02]"
@@ -376,6 +387,14 @@ export const SummaryHubView: React.FC = () => {
               {/* Card Footer Actions */}
               <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800/80">
                 <button
+                  onClick={() => openLinkedInShareModal(goal)}
+                  className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-[#0A66C2] dark:text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center justify-center transition-colors shadow-sm"
+                  title="Share this topic on LinkedIn"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                </button>
+
+                <button
                   onClick={() => recordTopicReview(goal.id)}
                   className="flex-1 py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                 >
@@ -388,7 +407,7 @@ export const SummaryHubView: React.FC = () => {
                   className="flex-1 py-2 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                 >
                   <Brain className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Full Summary Sheet</span>
+                  <span>Full Summary</span>
                 </button>
               </div>
             </div>

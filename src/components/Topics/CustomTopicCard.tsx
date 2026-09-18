@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Edit3,
   Trash2,
+  Share2,
 } from 'lucide-react';
 import { LearningGoal, Milestone } from '../../types';
 import { useStudy } from '../../context/StudyContext';
@@ -28,6 +29,7 @@ export const CustomTopicCard: React.FC<Props> = ({ goal }) => {
     updateGoal,
     setIsLogStudyOpen,
     setActiveGoalForLog,
+    openLinkedInShareModal,
   } = useStudy();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -112,6 +114,13 @@ export const CustomTopicCard: React.FC<Props> = ({ goal }) => {
                 className="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1 z-30 animate-in fade-in zoom-in-95 duration-100"
                 onClick={() => setMenuOpen(false)}
               >
+                <button
+                  onClick={() => openLinkedInShareModal(goal)}
+                  className="w-full text-left px-2.5 py-1.5 text-xs text-[#0A66C2] dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-lg flex items-center gap-2"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>Post to LinkedIn</span>
+                </button>
                 <button
                   onClick={() => openEditGoalModal(goal)}
                   className="w-full text-left px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2"

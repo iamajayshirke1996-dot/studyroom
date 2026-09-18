@@ -239,3 +239,17 @@ export interface UserFeaturePermissions {
   };
   updatedAt?: string;
 }
+
+export type LinkedInPostTone = 'insights' | 'code' | 'milestone' | 'story';
+
+export interface LinkedInPostOptions {
+  tone: LinkedInPostTone;
+  includeTakeaways: boolean;
+  includeCode: boolean;
+  includeGotchas: boolean;
+  includeCta: boolean;
+  includeHashtags: boolean;
+  customHeading?: string;
+  customCallToAction?: string;
+}
+

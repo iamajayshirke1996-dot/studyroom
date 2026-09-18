@@ -90,6 +90,11 @@ interface StudyContextType {
   isPomodoroOpen: boolean;
   setIsPomodoroOpen: (open: boolean) => void;
   openEditGoalModal: (goal: LearningGoal) => void;
+  isLinkedInModalOpen: boolean;
+  setIsLinkedInModalOpen: (open: boolean) => void;
+  linkedInShareGoal: LearningGoal | null;
+  setLinkedInShareGoal: (goal: LearningGoal | null) => void;
+  openLinkedInShareModal: (goal?: LearningGoal | null) => void;
 
   // Cloud sync states
   isSyncing: boolean;
@@ -186,6 +191,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activeGoalForLog, setActiveGoalForLog] = useState<LearningGoal | null>(null);
   const [selectedSummaryGoal, setSelectedSummaryGoal] = useState<LearningGoal | null>(null);
   const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  const [linkedInShareGoal, setLinkedInShareGoal] = useState<LearningGoal | null>(null);
+
+  const openLinkedInShareModal = (goal?: LearningGoal | null) => {
+    setLinkedInShareGoal(goal || null);
+    setIsLinkedInModalOpen(true);
+  };
   const [isSyncing, setIsSyncing] = useState(false);
   const [isWatchSyncModalOpen, setIsWatchSyncModalOpen] = useState(false);
   const [isHealthDashboardOpen, setIsHealthDashboardOpen] = useState(false);
@@ -1230,6 +1242,11 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentUserPermissions,
         updateUserPermissions,
         deleteUserPermissions,
+        isLinkedInModalOpen,
+        setIsLinkedInModalOpen,
+        linkedInShareGoal,
+        setLinkedInShareGoal,
+        openLinkedInShareModal,
       }}
     >
       {children}
