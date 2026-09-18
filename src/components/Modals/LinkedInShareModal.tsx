@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Sparkles,
@@ -28,39 +28,65 @@ import {
   Dices,
   Shuffle,
   Edit3,
-} from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { useStudy } from '../../context/StudyContext';
-import { useAuth } from '../../context/AuthContext';
-import { LinkedInPostTone } from '../../types';
+} from "lucide-react";
+import confetti from "canvas-confetti";
+import { useStudy } from "../../context/StudyContext";
+import { useAuth } from "../../context/AuthContext";
+import { LinkedInPostTone } from "../../types";
 import {
   checkGrammarAndEnhance,
   generateAILinkedInPost,
   getStoredGeminiApiKey,
   saveGeminiApiKey,
   GeminiApiError,
-} from '../../services/geminiService';
-import { generateLinkedInCardImage, ImageTheme } from '../../utils/imageGenerator';
+} from "../../services/geminiService";
+import {
+  generateLinkedInCardImage,
+  ImageTheme,
+} from "../../utils/imageGenerator";
 
 // Topic category to hashtag mappings
 const CATEGORY_HASHTAGS: Record<string, string[]> = {
-  react: ['#ReactJS', '#FrontendDev', '#JavaScript', '#WebDevelopment'],
-  typescript: ['#TypeScript', '#JavaScript', '#WebDev', '#CleanCode'],
-  javascript: ['#JavaScript', '#ES6', '#WebDev', '#Frontend'],
-  dsa: ['#DataStructures', '#Algorithms', '#LeetCode', '#CodingInterview', '#ProblemSolving'],
-  system_design: ['#SystemDesign', '#Backend', '#SoftwareArchitecture', '#Scalability'],
-  node: ['#NodeJS', '#BackendDev', '#JavaScript', '#WebDevelopment'],
-  python: ['#Python', '#AsyncIO', '#Backend', '#SoftwareEngineering'],
-  docker: ['#Docker', '#DevOps', '#Containers', '#CloudNative'],
-  sql: ['#SQL', '#Databases', '#PostgreSQL', '#DatabaseIndexing', '#BackendDev'],
-  default: ['#ContinuousLearning', '#SoftwareEngineering', '#DeveloperJourney', '#100DaysOfCode'],
+  react: ["#ReactJS", "#FrontendDev", "#JavaScript", "#WebDevelopment"],
+  typescript: ["#TypeScript", "#JavaScript", "#WebDev", "#CleanCode"],
+  javascript: ["#JavaScript", "#ES6", "#WebDev", "#Frontend"],
+  dsa: [
+    "#DataStructures",
+    "#Algorithms",
+    "#LeetCode",
+    "#CodingInterview",
+    "#ProblemSolving",
+  ],
+  system_design: [
+    "#SystemDesign",
+    "#Backend",
+    "#SoftwareArchitecture",
+    "#Scalability",
+  ],
+  node: ["#NodeJS", "#BackendDev", "#JavaScript", "#WebDevelopment"],
+  python: ["#Python", "#AsyncIO", "#Backend", "#SoftwareEngineering"],
+  docker: ["#Docker", "#DevOps", "#Containers", "#CloudNative"],
+  sql: [
+    "#SQL",
+    "#Databases",
+    "#PostgreSQL",
+    "#DatabaseIndexing",
+    "#BackendDev",
+  ],
+  default: [
+    "#ContinuousLearning",
+    "#SoftwareEngineering",
+    "#DeveloperJourney",
+    "#100DaysOfCode",
+  ],
 };
 
 // Built-in Sample Generated Texts tailored by topic
-const TOPIC_PRESET_TEMPLATES: Record<string, { label: string; text: string }> = {
-  react: {
-    label: '⚛️ React Hooks & Performance',
-    text: `🚀 Mastering Advanced React Hooks & Fiber Reconciler
+const TOPIC_PRESET_TEMPLATES: Record<string, { label: string; text: string }> =
+  {
+    react: {
+      label: "⚛️ React Hooks & Performance",
+      text: `🚀 Mastering Advanced React Hooks & Fiber Reconciler
 
 Today I spent focused study time diving deep into React's rendering pipeline, useMemo optimization, and custom hook encapsulation.
 
@@ -81,10 +107,10 @@ const memoizedCallback = useCallback(() => {
 👉 How do you structure state management in large React apps? Drop your thoughts below! 👇
 
 #ReactJS #FrontendDev #JavaScript #WebDevelopment #100DaysOfCode #StudyPulse`,
-  },
-  dsa: {
-    label: '🧩 DSA Sliding Window',
-    text: `🧠 Data Structures & Algorithms Spotlight: Two Pointers & Sliding Window
+    },
+    dsa: {
+      label: "🧩 DSA Sliding Window",
+      text: `🧠 Data Structures & Algorithms Spotlight: Two Pointers & Sliding Window
 
 Problem-solving mindset shift! Solved key pattern problems on subarray constraints today.
 
@@ -108,10 +134,10 @@ for (let right = 0; right < arr.length; right++) {
 👉 What's your favorite algorithm pattern for technical interviews? Let's connect! 🤝
 
 #DataStructures #Algorithms #LeetCode #CodingInterview #ProblemSolving #StudyPulse`,
-  },
-  system_design: {
-    label: '🏗️ System Design',
-    text: `🏗️ High-Availability System Design: Load Balancers & Caching
+    },
+    system_design: {
+      label: "🏗️ System Design",
+      text: `🏗️ High-Availability System Design: Load Balancers & Caching
 
 Exploring distributed architecture scalability and data consistency today!
 
@@ -125,10 +151,10 @@ Exploring distributed architecture scalability and data consistency today!
 👉 What caching strategy do you rely on for high-traffic microservices? 💬
 
 #SystemDesign #Backend #SoftwareArchitecture #Scalability #DistributedSystems #StudyPulse`,
-  },
-  javascript: {
-    label: '💛 JS Event Loop',
-    text: `⚡ Deep Dive: JavaScript Engine & Microtask Queue Execution
+    },
+    javascript: {
+      label: "💛 JS Event Loop",
+      text: `⚡ Deep Dive: JavaScript Engine & Microtask Queue Execution
 
 Demystifying how Node.js and Browser V8 handle asynchronous tasks behind the scenes!
 
@@ -149,10 +175,10 @@ console.log('4'); // Sync
 👉 What's a JS concept that took you a while to master? 💬
 
 #JavaScript #WebDev #NodeJS #AsyncJS #CleanCode #StudyPulse`,
-  },
-  typescript: {
-    label: '📘 TypeScript Generics',
-    text: `📘 Deep Dive: Advanced TypeScript Generics & Conditional Types
+    },
+    typescript: {
+      label: "📘 TypeScript Generics",
+      text: `📘 Deep Dive: Advanced TypeScript Generics & Conditional Types
 
 Leveling up type safety in large-scale applications today!
 
@@ -173,10 +199,10 @@ type DeepReadonly<T> = {
 👉 What is your favorite TypeScript utility type or pattern? Drop a comment below! 👇
 
 #TypeScript #JavaScript #WebDev #CleanCode #SoftwareEngineering #StudyPulse`,
-  },
-  python: {
-    label: '🐍 Python Asyncio',
-    text: `🐍 Python Masterclass: Asyncio & Event Loop Mechanics
+    },
+    python: {
+      label: "🐍 Python Asyncio",
+      text: `🐍 Python Masterclass: Asyncio & Event Loop Mechanics
 
 Exploring asynchronous I/O performance and non-blocking concurrency patterns in Python!
 
@@ -202,10 +228,10 @@ results = await asyncio.gather(*[fetch_data(u) for u in urls])
 👉 Do you use Asyncio or ThreadPoolExecutor for concurrent jobs in Python? 💬
 
 #Python #AsyncIO #Backend #SoftwareEngineering #CleanCode #StudyPulse`,
-  },
-  node: {
-    label: '🟢 Node.js Streams',
-    text: `🟢 Node.js Deep Dive: Stream Piping & Event Loop Phases
+    },
+    node: {
+      label: "🟢 Node.js Streams",
+      text: `🟢 Node.js Deep Dive: Stream Piping & Event Loop Phases
 
 Mastering memory-efficient data processing with Node.js streams and backpressure handling!
 
@@ -232,10 +258,10 @@ await pipeline(
 👉 What stream transformer tools do you use in Node.js backend services? 💬
 
 #NodeJS #BackendDev #JavaScript #WebDevelopment #SoftwareEngineering #StudyPulse`,
-  },
-  docker: {
-    label: '🐳 Docker Multi-Stage',
-    text: `🐳 Docker Masterclass: Multi-Stage Builds & Minimal Production Images
+    },
+    docker: {
+      label: "🐳 Docker Multi-Stage",
+      text: `🐳 Docker Masterclass: Multi-Stage Builds & Minimal Production Images
 
 Optimizing container deployment sizes from 1.2GB down to just 35MB!
 
@@ -263,10 +289,10 @@ EXPOSE 80
 👉 What tricks do you use to shrink Docker image sizes? Let's discuss! 🤝
 
 #Docker #DevOps #Containers #CloudNative #Microservices #StudyPulse`,
-  },
-  sql: {
-    label: '𝄠 SQL Query Tuning',
-    text: `⚡ Database Engineering: B-Tree Indexing & Query Execution Plans
+    },
+    sql: {
+      label: "𝄠 SQL Query Tuning",
+      text: `⚡ Database Engineering: B-Tree Indexing & Query Execution Plans
 
 Tuning SQL query performance from 4.2 seconds down to 18 milliseconds!
 
@@ -290,14 +316,14 @@ WHERE created_at >= '2026-01-01' AND created_at < '2027-01-01';
 👉 What database engine and indexing strategy do you rely on? 💬
 
 #SQL #Databases #PostgreSQL #DatabaseIndexing #BackendDev #StudyPulse`,
-  },
-};
+    },
+  };
 
 // Random tech topics pool for 1-click random post generation
 const RANDOM_TECH_TOPICS = [
   {
-    title: 'Microservices & Event-Driven Architecture',
-    category: 'Backend Architecture',
+    title: "Microservices & Event-Driven Architecture",
+    category: "Backend Architecture",
     text: `🚀 Mastering Microservices & Event-Driven Architecture
 
 Exploring asynchronous event streaming and distributed system decoupling today!
@@ -314,8 +340,8 @@ Exploring asynchronous event streaming and distributed system decoupling today!
 #SystemDesign #Microservices #Kafka #BackendDev #SoftwareEngineering #StudyPulse`,
   },
   {
-    title: 'CSS Container Queries & Modern Layouts',
-    category: 'Frontend Engineering',
+    title: "CSS Container Queries & Modern Layouts",
+    category: "Frontend Engineering",
     text: `🎨 Game Changer: CSS Container Queries (@container) & Subgrid
 
 Component-driven responsive design has reached a whole new level!
@@ -330,8 +356,8 @@ Component-driven responsive design has reached a whole new level!
 #CSS #WebDevelopment #Frontend #ResponsiveDesign #UIUX #StudyPulse`,
   },
   {
-    title: 'Git Rebase vs Merge Strategies',
-    category: 'Developer Tooling',
+    title: "Git Rebase vs Merge Strategies",
+    category: "Developer Tooling",
     text: `⚡ Developer Workflow: Git Interactive Rebase vs Merge Strategies
 
 Keeping project commit histories clean and bisect-ready!
@@ -346,8 +372,8 @@ Keeping project commit histories clean and bisect-ready!
 #Git #DevOps #SoftwareEngineering #Coding #CleanCode #StudyPulse`,
   },
   {
-    title: 'GraphQL APIs vs REST Architecture',
-    category: 'API Design',
+    title: "GraphQL APIs vs REST Architecture",
+    category: "API Design",
     text: `📡 Modern API Engineering: GraphQL vs REST Architecture
 
 Solving network payload over-fetching and under-fetching today!
@@ -362,8 +388,8 @@ Solving network payload over-fetching and under-fetching today!
 #GraphQL #WebAPIs #BackendDev #SoftwareArchitecture #StudyPulse`,
   },
   {
-    title: 'Cybersecurity & OWASP Hardening',
-    category: 'Application Security',
+    title: "Cybersecurity & OWASP Hardening",
+    category: "Application Security",
     text: `🛡️ Web Application Security: Hardening Code Against OWASP Vulnerabilities
 
 Building security into application architecture from day one!
@@ -378,8 +404,8 @@ Building security into application architecture from day one!
 #CyberSecurity #OWASP #ApplicationSecurity #Backend #WebDev #StudyPulse`,
   },
   {
-    title: 'Rust Ownership & Memory Safety',
-    category: 'Systems Programming',
+    title: "Rust Ownership & Memory Safety",
+    category: "Systems Programming",
     text: `🦀 Systems Engineering: Rust Ownership, Borrowing & Zero-Cost Abstractions
 
 Exploring memory safety without garbage collector runtime overhead!
@@ -394,8 +420,8 @@ Exploring memory safety without garbage collector runtime overhead!
 #RustLang #SystemsProgramming #SoftwareEngineering #Coding #CleanCode #StudyPulse`,
   },
   {
-    title: 'Kubernetes Pod Autoscaling & Infrastructure',
-    category: 'Cloud Infrastructure',
+    title: "Kubernetes Pod Autoscaling & Infrastructure",
+    category: "Cloud Infrastructure",
     text: `☁️ Cloud Infrastructure: Kubernetes Horizontal Pod Autoscaler (HPA)
 
 Building elastic cloud native infrastructure that scales under load automatically!
@@ -410,8 +436,8 @@ Building elastic cloud native infrastructure that scales under load automaticall
 #Kubernetes #CloudNative #DevOps #Docker #AWS #StudyPulse`,
   },
   {
-    title: 'Clean Code & SOLID Design Principles',
-    category: 'Software Architecture',
+    title: "Clean Code & SOLID Design Principles",
+    category: "Software Architecture",
     text: `📐 Software Craftsmanship: Applying SOLID Principles in Object-Oriented Code
 
 Writing scalable, maintainable, and loosely-coupled code bases!
@@ -438,15 +464,17 @@ export const LinkedInShareModal: React.FC = () => {
   const { user } = useAuth();
 
   // Selected goal state (null = custom post or general learning)
-  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+  const [selectedGoalId, setSelectedGoalId] = useState<string>("");
 
   // Custom topic mode state
   const [isCustomTopicMode, setIsCustomTopicMode] = useState(false);
-  const [customTopicTitle, setCustomTopicTitle] = useState('');
-  const [customTopicCategory, setCustomTopicCategory] = useState('Software Engineering');
+  const [customTopicTitle, setCustomTopicTitle] = useState("");
+  const [customTopicCategory, setCustomTopicCategory] = useState(
+    "Software Engineering",
+  );
 
   // Generator Options
-  const [tone, setTone] = useState<LinkedInPostTone>('insights');
+  const [tone, setTone] = useState<LinkedInPostTone>("insights");
   const [includeTakeaways, setIncludeTakeaways] = useState(true);
   const [includeCode, setIncludeCode] = useState(true);
   const [includeGotchas, setIncludeGotchas] = useState(true);
@@ -454,24 +482,28 @@ export const LinkedInShareModal: React.FC = () => {
   const [includeHashtags, setIncludeHashtags] = useState(true);
 
   // Editable draft state
-  const [draftText, setDraftText] = useState('');
+  const [draftText, setDraftText] = useState("");
   const [copiedToast, setCopiedToast] = useState(false);
-  const [activeTab, setActiveTab] = useState<'preview' | 'editor' | 'image'>('preview');
+  const [activeTab, setActiveTab] = useState<"preview" | "editor" | "image">(
+    "preview",
+  );
 
   // Gemini AI state
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiNotice, setAiNotice] = useState('');
+  const [aiNotice, setAiNotice] = useState("");
   const [geminiError, setGeminiError] = useState<GeminiApiError | null>(null);
   const [showKeyConfig, setShowKeyConfig] = useState(false);
-  const [customKeyInput, setCustomKeyInput] = useState(() => getStoredGeminiApiKey());
+  const [customKeyInput, setCustomKeyInput] = useState(() =>
+    getStoredGeminiApiKey(),
+  );
 
   // Infographic Image Banner State
-  const [imageTheme, setImageTheme] = useState<ImageTheme>('cyberpunk');
-  const [cardImageDataUrl, setCardImageDataUrl] = useState<string>('');
+  const [imageTheme, setImageTheme] = useState<ImageTheme>("cyberpunk");
+  const [cardImageDataUrl, setCardImageDataUrl] = useState<string>("");
 
   // Find target goal from selection or context
   const activeGoal = useMemo(() => {
-    if (selectedGoalId && selectedGoalId !== 'CUSTOM') {
+    if (selectedGoalId && selectedGoalId !== "CUSTOM") {
       return goals.find((g) => g.id === selectedGoalId) || null;
     }
     return linkedInShareGoal || goals[0] || null;
@@ -480,16 +512,16 @@ export const LinkedInShareModal: React.FC = () => {
   // Derived Active Title and Category
   const activeTitle = useMemo(() => {
     if (isCustomTopicMode) {
-      return customTopicTitle.trim() || 'Modern Software Engineering';
+      return customTopicTitle.trim() || "Modern Software Engineering";
     }
-    return activeGoal ? activeGoal.title : 'Modern Web Development';
+    return activeGoal ? activeGoal.title : "Modern Web Development";
   }, [isCustomTopicMode, customTopicTitle, activeGoal]);
 
   const activeCategory = useMemo(() => {
     if (isCustomTopicMode) {
-      return customTopicCategory.trim() || 'Software Engineering';
+      return customTopicCategory.trim() || "Software Engineering";
     }
-    return activeGoal ? activeGoal.category : 'Software Engineering';
+    return activeGoal ? activeGoal.category : "Software Engineering";
   }, [isCustomTopicMode, customTopicCategory, activeGoal]);
 
   // Sync selected goal ID when modal opens or goal prop changes
@@ -502,7 +534,7 @@ export const LinkedInShareModal: React.FC = () => {
         setSelectedGoalId(goals[0].id);
         setIsCustomTopicMode(false);
       } else {
-        setSelectedGoalId('CUSTOM');
+        setSelectedGoalId("CUSTOM");
         setIsCustomTopicMode(true);
       }
     }
@@ -510,28 +542,40 @@ export const LinkedInShareModal: React.FC = () => {
 
   // Post generation logic
   const generatePostCopy = () => {
-    const title = activeGoal ? activeGoal.title : 'Modern Web Development & Concepts';
-    const category = activeGoal ? activeGoal.category : 'Software Engineering';
+    const title = activeGoal
+      ? activeGoal.title
+      : "Modern Web Development & Concepts";
+    const category = activeGoal ? activeGoal.category : "Software Engineering";
     const takeaways = activeGoal?.summary?.keyTakeaways || [];
-    const code = activeGoal?.summary?.cheatSheetCode || '';
+    const code = activeGoal?.summary?.cheatSheetCode || "";
     const gotchas = activeGoal?.summary?.gotchas || [];
 
     const postLines: string[] = [];
 
     // Header based on Tone
-    if (tone === 'insights') {
+    if (tone === "insights") {
       postLines.push(`💡 Key takeaways from my study room on "${title}":\n`);
-      postLines.push(`I've been diving deep into ${category} recently. Here are the core concepts and mental models that stood out most:\n`);
-    } else if (tone === 'code') {
+      postLines.push(
+        `I've been diving deep into ${category} recently. Here are the core concepts and mental models that stood out most:\n`,
+      );
+    } else if (tone === "code") {
       postLines.push(`💻 Code & Syntax Spotlight: ${title}\n`);
-      postLines.push(`Understanding the underlying mechanics of ${category} changes how you write clean code. Check out this snippet & breakdown:\n`);
-    } else if (tone === 'milestone') {
-      postLines.push(`🚀 Milestone Reached: Completed deep-dive on "${title}"! 🏆\n`);
-      postLines.push(`Consistency pays off! Finished key lectures & practical implementation in ${category}.\n`);
+      postLines.push(
+        `Understanding the underlying mechanics of ${category} changes how you write clean code. Check out this snippet & breakdown:\n`,
+      );
+    } else if (tone === "milestone") {
+      postLines.push(
+        `🚀 Milestone Reached: Completed deep-dive on "${title}"! 🏆\n`,
+      );
+      postLines.push(
+        `Consistency pays off! Finished key lectures & practical implementation in ${category}.\n`,
+      );
     } else {
       // Story tone
       postLines.push(`🌱 Daily Learning Journey: Reflecting on ${title}\n`);
-      postLines.push(`One thing I love about tech is that there's always a deeper layer to master. Lately, I've been mastering ${category}.\n`);
+      postLines.push(
+        `One thing I love about tech is that there's always a deeper layer to master. Lately, I've been mastering ${category}.\n`,
+      );
     }
 
     // Key Takeaways section
@@ -540,7 +584,7 @@ export const LinkedInShareModal: React.FC = () => {
       takeaways.slice(0, 5).forEach((t) => {
         postLines.push(`• ${t}`);
       });
-      postLines.push('');
+      postLines.push("");
     }
 
     // Code Snippet section
@@ -555,17 +599,23 @@ export const LinkedInShareModal: React.FC = () => {
       gotchas.slice(0, 3).forEach((g) => {
         postLines.push(`- ${g}`);
       });
-      postLines.push('');
+      postLines.push("");
     }
 
     // Call to Action
     if (includeCta) {
-      if (tone === 'code') {
-        postLines.push(`👉 How do you handle this pattern in your projects? Drop your thoughts below! 👇\n`);
-      } else if (tone === 'milestone') {
-        postLines.push(`👉 What topics are you mastering this week? Let's connect and share learnings! 🤝\n`);
+      if (tone === "code") {
+        postLines.push(
+          `👉 How do you handle this pattern in your projects? Drop your thoughts below! 👇\n`,
+        );
+      } else if (tone === "milestone") {
+        postLines.push(
+          `👉 What topics are you mastering this week? Let's connect and share learnings! 🤝\n`,
+        );
       } else {
-        postLines.push(`👉 What's your take on this? Always open to insights and discussion! 💬\n`);
+        postLines.push(
+          `👉 What's your take on this? Always open to insights and discussion! 💬\n`,
+        );
       }
     }
 
@@ -581,28 +631,37 @@ export const LinkedInShareModal: React.FC = () => {
         }
       }
 
-      const allTags = Array.from(new Set([...tags, '#StudyPulse', '#ContinuousLearning', '#GrowthMindset'])).join(' ');
+      const allTags = Array.from(
+        new Set([
+          ...tags,
+          "#StudyPulse",
+          "#ContinuousLearning",
+          "#GrowthMindset",
+        ]),
+      ).join(" ");
       postLines.push(allTags);
     }
 
-    setDraftText(postLines.join('\n'));
+    setDraftText(postLines.join("\n"));
   };
 
   // Dynamic Infographic Takeaway Extractor (AI-generated bullet points & clean takeaway formatting)
   const formatInfographicTakeaways = (): string[] => {
     // 1. Try extracting bullet points from draftText if available
     if (draftText) {
-      const lines = draftText.split('\n');
+      const lines = draftText.split("\n");
       const bulletLines: string[] = [];
       for (const line of lines) {
         const trimmed = line.trim();
         if (
-          (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('📌')) &&
-          !trimmed.toLowerCase().includes('core takeaways')
+          (trimmed.startsWith("•") ||
+            trimmed.startsWith("-") ||
+            trimmed.startsWith("📌")) &&
+          !trimmed.toLowerCase().includes("core takeaways")
         ) {
           const clean = trimmed
-            .replace(/^[•\-📌\d\.\s]+/, '')
-            .replace(/^Core goal established:\s*/i, '')
+            .replace(/^[•\-📌\d\.\s]+/, "")
+            .replace(/^Core goal established:\s*/i, "")
             .trim();
           if (clean.length > 5) {
             bulletLines.push(clean);
@@ -615,13 +674,19 @@ export const LinkedInShareModal: React.FC = () => {
     }
 
     // 2. Fallback to activeGoal summary keyTakeaways cleaned up
-    if (activeGoal?.summary?.keyTakeaways && activeGoal.summary.keyTakeaways.length > 0) {
+    if (
+      activeGoal?.summary?.keyTakeaways &&
+      activeGoal.summary.keyTakeaways.length > 0
+    ) {
       return activeGoal.summary.keyTakeaways
         .map((t) =>
           t
-            .replace(/^Core goal established:\s*/i, '')
-            .replace(/Javascript Doesnt have Feature of Private and Public to Hide Data, So we use Scoping for Do that, fun\.\.\./i, 'JavaScript uses Scoping & Encapsulation to conceal private state')
-            .trim()
+            .replace(/^Core goal established:\s*/i, "")
+            .replace(
+              /Javascript Doesnt have Feature of Private and Public to Hide Data, So we use Scoping for Do that, fun\.\.\./i,
+              "JavaScript uses Scoping & Encapsulation to conceal private state",
+            )
+            .trim(),
         )
         .filter((t) => t.length > 3)
         .slice(0, 4);
@@ -629,7 +694,7 @@ export const LinkedInShareModal: React.FC = () => {
 
     // 3. Default fallback by topic
     return [
-      `Mastered core mental models and implementation patterns in ${activeGoal?.category || 'Software Engineering'}`,
+      `Mastered core mental models and implementation patterns in ${activeGoal?.category || "Software Engineering"}`,
       `Applied practical architectural principles and code optimization techniques`,
       `Explored execution mechanics and performance trade-offs in real-world scenarios`,
     ];
@@ -643,7 +708,7 @@ export const LinkedInShareModal: React.FC = () => {
       category: activeCategory,
       takeaways,
       theme: imageTheme,
-      authorName: user?.displayName || 'StudyPulse Learner',
+      authorName: user?.displayName || "StudyPulse Learner",
     });
     setCardImageDataUrl(dataUrl);
   };
@@ -654,13 +719,13 @@ export const LinkedInShareModal: React.FC = () => {
     const item = RANDOM_TECH_TOPICS[randomIndex];
 
     setIsCustomTopicMode(true);
-    setSelectedGoalId('CUSTOM');
+    setSelectedGoalId("CUSTOM");
     setCustomTopicTitle(item.title);
     setCustomTopicCategory(item.category);
     setDraftText(item.text);
     setAiNotice(`🎲 Random tech post generated: ${item.title}`);
     confetti({ particleCount: 35, spread: 60, origin: { y: 0.7 } });
-    setTimeout(() => setAiNotice(''), 3500);
+    setTimeout(() => setAiNotice(""), 3500);
   };
 
   // Re-generate copy whenever options or active goal changes
@@ -693,24 +758,24 @@ export const LinkedInShareModal: React.FC = () => {
   const handleFixGrammarWithGemini = async () => {
     setIsAiLoading(true);
     setGeminiError(null);
-    setAiNotice('Gemini AI is checking grammar & polishing post style...');
+    setAiNotice("Gemini AI is checking grammar & polishing post style...");
     try {
       const res = await checkGrammarAndEnhance(draftText);
       if (res.error) {
         setGeminiError(res.error);
-        setAiNotice('Gemini API Permission required or API disabled.');
+        setAiNotice("Gemini API Permission required or API disabled.");
       } else if (res.text && res.text !== draftText) {
         setDraftText(res.text);
-        setAiNotice('✨ Grammar & style polished by Gemini AI!');
+        setAiNotice("✨ Grammar & style polished by Gemini AI!");
         confetti({ particleCount: 30, spread: 55, origin: { y: 0.7 } });
       } else {
-        setAiNotice('Grammar and spelling look great already!');
+        setAiNotice("Grammar and spelling look great already!");
       }
     } catch (err: any) {
-      setAiNotice('Gemini check notice.');
+      setAiNotice("Gemini check notice.");
     } finally {
       setIsAiLoading(false);
-      setTimeout(() => setAiNotice(''), 4500);
+      setTimeout(() => setAiNotice(""), 4500);
     }
   };
 
@@ -723,7 +788,7 @@ export const LinkedInShareModal: React.FC = () => {
         title: activeTitle,
         category: activeCategory,
         takeaways: isCustomTopicMode
-          ? [activeTitle, 'Mastered key implementation mental models']
+          ? [activeTitle, "Mastered key implementation mental models"]
           : activeGoal?.summary?.keyTakeaways || [],
         code: activeGoal?.summary?.cheatSheetCode,
         gotchas: activeGoal?.summary?.gotchas,
@@ -732,17 +797,17 @@ export const LinkedInShareModal: React.FC = () => {
 
       if (res.error) {
         setGeminiError(res.error);
-        setAiNotice('Gemini API Permission required or API disabled.');
+        setAiNotice("Gemini API Permission required or API disabled.");
       } else if (res.text) {
         setDraftText(res.text);
-        setAiNotice('✨ Custom post generated with Gemini AI model!');
+        setAiNotice("✨ Custom post generated with Gemini AI model!");
         confetti({ particleCount: 40, spread: 65, origin: { y: 0.7 } });
       }
     } catch (err: any) {
-      setAiNotice('Gemini AI notice.');
+      setAiNotice("Gemini AI notice.");
     } finally {
       setIsAiLoading(false);
-      setTimeout(() => setAiNotice(''), 4500);
+      setTimeout(() => setAiNotice(""), 4500);
     }
   };
 
@@ -750,21 +815,21 @@ export const LinkedInShareModal: React.FC = () => {
     saveGeminiApiKey(customKeyInput);
     setGeminiError(null);
     setShowKeyConfig(false);
-    setAiNotice('Gemini API Key updated & saved!');
-    setTimeout(() => setAiNotice(''), 3000);
+    setAiNotice("Gemini API Key updated & saved!");
+    setTimeout(() => setAiNotice(""), 3000);
   };
 
   const loadPresetTemplate = (templateKey: string) => {
     const template = TOPIC_PRESET_TEMPLATES[templateKey];
     if (template) {
-      const labelTitle = template.label.replace(/^[^\w\s]+/, '').trim();
+      const labelTitle = template.label.replace(/^[^\w\s]+/, "").trim();
       setIsCustomTopicMode(true);
-      setSelectedGoalId('CUSTOM');
+      setSelectedGoalId("CUSTOM");
       setCustomTopicTitle(labelTitle);
       setDraftText(template.text);
       setAiNotice(`Loaded sample draft: ${template.label}`);
       confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
-      setTimeout(() => setAiNotice(''), 3000);
+      setTimeout(() => setAiNotice(""), 3000);
     }
   };
 
@@ -783,44 +848,49 @@ export const LinkedInShareModal: React.FC = () => {
     // Open LinkedIn feed or post share dialog in new window
     setTimeout(() => {
       const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(draftText)}`;
-      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
     }, 400);
 
     setTimeout(() => setCopiedToast(false), 3000);
   };
 
   const downloadTextFile = () => {
-    const blob = new Blob([draftText], { type: 'text/plain' });
+    const blob = new Blob([draftText], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `linkedin_post_${(activeGoal?.title || 'learning').toLowerCase().replace(/[^a-z0-9]/g, '_')}.txt`;
+    a.download = `linkedin_post_${(activeGoal?.title || "learning").toLowerCase().replace(/[^a-z0-9]/g, "_")}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const downloadCardImage = () => {
     if (!cardImageDataUrl) return;
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = cardImageDataUrl;
-    a.download = `studypulse_linkedin_infographic_${(activeGoal?.title || 'learning').toLowerCase().replace(/[^a-z0-9]/g, '_')}.png`;
+    a.download = `studypulse_linkedin_infographic_${(activeGoal?.title || "learning").toLowerCase().replace(/[^a-z0-9]/g, "_")}.png`;
     a.click();
   };
 
   const charCount = draftText.length;
   const isOverLimit = charCount > 3000;
-  const authorName = user?.displayName || 'StudyPulse Learner';
+  const authorName = user?.displayName || "StudyPulse Learner";
   const avatarUrl = user?.photoURL || null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100 relative">
-        
         {/* Toast alert when copied or AI status */}
         {(copiedToast || aiNotice) && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-4 duration-300">
-            {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            <span>{aiNotice || 'Post text copied to clipboard! Opening LinkedIn...'}</span>
+            {isAiLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            <span>
+              {aiNotice || "Post text copied to clipboard! Opening LinkedIn..."}
+            </span>
           </div>
         )}
 
@@ -873,8 +943,8 @@ export const LinkedInShareModal: React.FC = () => {
                 </h4>
                 <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
                   {geminiError?.isApiDisabled
-                    ? 'The Gemini API is disabled for the default GCP Firebase project (124383331241) or permission is required. You can enable it on Google Cloud or paste a free Gemini API Key from Google AI Studio.'
-                    : 'Configure your custom Gemini API key below:'}
+                    ? "The Gemini API is disabled for the default GCP Firebase project (124383331241) or permission is required. You can enable it on Google Cloud or paste a free Gemini API Key from Google AI Studio."
+                    : "Configure your custom Gemini API key below:"}
                 </p>
               </div>
 
@@ -893,7 +963,7 @@ export const LinkedInShareModal: React.FC = () => {
               <a
                 href={
                   geminiError?.activationUrl ||
-                  'https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=124383331241'
+                  "https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=124383331241"
                 }
                 target="_blank"
                 rel="noreferrer"
@@ -936,10 +1006,8 @@ export const LinkedInShareModal: React.FC = () => {
 
         {/* Modal Body Grid */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
           {/* Left Column: Topic & Gemini AI Actions (5 cols) */}
           <div className="lg:col-span-5 space-y-5">
-            
             {/* Topic Selection */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -957,11 +1025,11 @@ export const LinkedInShareModal: React.FC = () => {
               </div>
 
               <select
-                value={isCustomTopicMode ? 'CUSTOM' : selectedGoalId}
+                value={isCustomTopicMode ? "CUSTOM" : selectedGoalId}
                 onChange={(e) => {
-                  if (e.target.value === 'CUSTOM') {
+                  if (e.target.value === "CUSTOM") {
                     setIsCustomTopicMode(true);
-                    setSelectedGoalId('CUSTOM');
+                    setSelectedGoalId("CUSTOM");
                   } else {
                     setIsCustomTopicMode(false);
                     setSelectedGoalId(e.target.value);
@@ -977,7 +1045,9 @@ export const LinkedInShareModal: React.FC = () => {
                   ))}
                 </optgroup>
                 <optgroup label="✨ Any Custom / Random Topic">
-                  <option value="CUSTOM">✏️ Custom Topic / Type Any Topic...</option>
+                  <option value="CUSTOM">
+                    ✏️ Custom Topic / Type Any Topic...
+                  </option>
                 </optgroup>
               </select>
 
@@ -1080,22 +1150,40 @@ export const LinkedInShareModal: React.FC = () => {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: 'insights', label: '💡 Tech Insights', desc: 'Key takeaways & takeaways' },
-                  { id: 'code', label: '💻 Code Spotlight', desc: 'Cheat sheet & syntax' },
-                  { id: 'milestone', label: '🚀 Milestone', desc: 'Completion & progress' },
-                  { id: 'story', label: '🌱 Learning Story', desc: 'Reflection & growth' },
+                  {
+                    id: "insights",
+                    label: "💡 Tech Insights",
+                    desc: "Key takeaways & takeaways",
+                  },
+                  {
+                    id: "code",
+                    label: "💻 Code Spotlight",
+                    desc: "Cheat sheet & syntax",
+                  },
+                  {
+                    id: "milestone",
+                    label: "🚀 Milestone",
+                    desc: "Completion & progress",
+                  },
+                  {
+                    id: "story",
+                    label: "🌱 Learning Story",
+                    desc: "Reflection & growth",
+                  },
                 ].map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setTone(item.id as LinkedInPostTone)}
                     className={`p-2.5 rounded-xl text-left border transition-all ${
                       tone === item.id
-                        ? 'bg-blue-500/10 border-blue-500 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/30'
-                        : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300'
+                        ? "bg-blue-500/10 border-blue-500 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/30"
+                        : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     <div className="text-xs font-bold">{item.label}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {item.desc}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -1124,7 +1212,10 @@ export const LinkedInShareModal: React.FC = () => {
                     onChange={(e) => setIncludeTakeaways(e.target.checked)}
                     className="rounded text-blue-600 focus:ring-blue-500"
                   />
-                  <span>Key Takeaways & Core Concepts ({activeGoal?.summary?.keyTakeaways?.length || 0})</span>
+                  <span>
+                    Key Takeaways & Core Concepts (
+                    {activeGoal?.summary?.keyTakeaways?.length || 0})
+                  </span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer text-slate-700 dark:text-slate-300 font-medium select-none">
@@ -1144,7 +1235,10 @@ export const LinkedInShareModal: React.FC = () => {
                     onChange={(e) => setIncludeGotchas(e.target.checked)}
                     className="rounded text-blue-600 focus:ring-blue-500"
                   />
-                  <span>Tricky Gotchas & Warnings ({activeGoal?.summary?.gotchas?.length || 0})</span>
+                  <span>
+                    Tricky Gotchas & Warnings (
+                    {activeGoal?.summary?.gotchas?.length || 0})
+                  </span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer text-slate-700 dark:text-slate-300 font-medium select-none">
@@ -1168,21 +1262,19 @@ export const LinkedInShareModal: React.FC = () => {
                 </label>
               </div>
             </div>
-
           </div>
 
           {/* Right Column: Draft Editor, LinkedIn Feed Preview & Infographic Image Studio (7 cols) */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
-            
             {/* View Switcher Tabs (Preview, Editor, Infographic Image) */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2 flex-wrap gap-2">
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setActiveTab('preview')}
+                  onClick={() => setActiveTab("preview")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeTab === 'preview'
-                      ? 'bg-[#0A66C2] text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    activeTab === "preview"
+                      ? "bg-[#0A66C2] text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <Share2 className="h-3.5 w-3.5" />
@@ -1190,11 +1282,11 @@ export const LinkedInShareModal: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('editor')}
+                  onClick={() => setActiveTab("editor")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeTab === 'editor'
-                      ? 'bg-[#0A66C2] text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    activeTab === "editor"
+                      ? "bg-[#0A66C2] text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <Code className="h-3.5 w-3.5" />
@@ -1202,11 +1294,11 @@ export const LinkedInShareModal: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('image')}
+                  onClick={() => setActiveTab("image")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeTab === 'image'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    activeTab === "image"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   <ImageIcon className="h-3.5 w-3.5 text-purple-300" />
@@ -1216,17 +1308,25 @@ export const LinkedInShareModal: React.FC = () => {
 
               {/* Character Count */}
               <div className="flex items-center gap-2 text-xs font-mono">
-                <span className={isOverLimit ? 'text-rose-500 font-bold' : 'text-slate-500 dark:text-slate-400'}>
+                <span
+                  className={
+                    isOverLimit
+                      ? "text-rose-500 font-bold"
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                >
                   {charCount} / 3000 chars
                 </span>
               </div>
             </div>
 
             {/* Tab 1: Raw Draft Textarea Editor */}
-            {activeTab === 'editor' && (
+            {activeTab === "editor" && (
               <div className="flex-1 flex flex-col space-y-2 min-h-[360px]">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-slate-500 font-medium">Direct Editor:</span>
+                  <span className="text-slate-500 font-medium">
+                    Direct Editor:
+                  </span>
                   <button
                     onClick={handleFixGrammarWithGemini}
                     disabled={isAiLoading}
@@ -1246,7 +1346,7 @@ export const LinkedInShareModal: React.FC = () => {
             )}
 
             {/* Tab 2: Authentic LinkedIn Feed Post Card Mockup */}
-            {activeTab === 'preview' && (
+            {activeTab === "preview" && (
               <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-lg space-y-4 font-sans text-slate-900 dark:text-slate-100 min-h-[360px] flex flex-col justify-between">
                 <div>
                   {/* LinkedIn User Profile Header */}
@@ -1267,10 +1367,13 @@ export const LinkedInShareModal: React.FC = () => {
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 cursor-pointer flex items-center gap-1">
                           <span>{authorName}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">• 1st</span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            • 1st
+                          </span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          Full-Stack Engineer & Continuous Learner | Building on StudyPulse
+                          Full-Stack Engineer & Continuous Learner | Building on
+                          StudyPulse
                         </p>
                         <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
                           <span>Just now</span>
@@ -1283,11 +1386,14 @@ export const LinkedInShareModal: React.FC = () => {
 
                   {/* LinkedIn Post Content Body */}
                   <div className="text-xs leading-relaxed whitespace-pre-line text-slate-800 dark:text-slate-200 space-y-2 mb-4 font-sans">
-                    {draftText.split('\n').map((line, idx) => {
-                      if (line.startsWith('```')) return null;
-                      if (line.startsWith('#')) {
+                    {draftText.split("\n").map((line, idx) => {
+                      if (line.startsWith("```")) return null;
+                      if (line.startsWith("#")) {
                         return (
-                          <p key={idx} className="text-[#0A66C2] dark:text-blue-400 font-semibold">
+                          <p
+                            key={idx}
+                            className="text-[#0A66C2] dark:text-blue-400 font-semibold"
+                          >
                             {line}
                           </p>
                         );
@@ -1301,9 +1407,15 @@ export const LinkedInShareModal: React.FC = () => {
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-2 py-1">
                     <div className="flex items-center gap-1">
-                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] font-bold">👍</span>
-                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[8px] font-bold">💡</span>
-                      <span className="text-[11px] font-medium ml-1">You and 14 others</span>
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] font-bold">
+                        👍
+                      </span>
+                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[8px] font-bold">
+                        💡
+                      </span>
+                      <span className="text-[11px] font-medium ml-1">
+                        You and 14 others
+                      </span>
                     </div>
                     <span className="text-[11px]">3 comments</span>
                   </div>
@@ -1331,7 +1443,7 @@ export const LinkedInShareModal: React.FC = () => {
             )}
 
             {/* Tab 3: Infographic Image Card Studio */}
-            {activeTab === 'image' && (
+            {activeTab === "image" && (
               <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 p-4 space-y-3 min-h-[360px] flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -1342,18 +1454,18 @@ export const LinkedInShareModal: React.FC = () => {
 
                     <div className="flex items-center gap-1.5">
                       {[
-                        { id: 'cyberpunk', name: '🌌 Cyberpunk' },
-                        { id: 'linkedin', name: '💼 LinkedIn Blue' },
-                        { id: 'terminal', name: '⚡ Terminal' },
-                        { id: 'sunset', name: '🌅 Sunset' },
+                        { id: "cyberpunk", name: "🌌 Cyberpunk" },
+                        { id: "linkedin", name: "💼 LinkedIn Blue" },
+                        { id: "terminal", name: "⚡ Terminal" },
+                        { id: "sunset", name: "🌅 Sunset" },
                       ].map((t) => (
                         <button
                           key={t.id}
                           onClick={() => setImageTheme(t.id as ImageTheme)}
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
                             imageTheme === t.id
-                              ? 'bg-purple-600 text-white border-purple-400'
-                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              ? "bg-purple-600 text-white border-purple-400"
+                              : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
                           }`}
                         >
                           {t.name}
@@ -1375,7 +1487,10 @@ export const LinkedInShareModal: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
-                  <span className="text-slate-400 text-[11px]">Live URL: studyroom-amber.vercel.app • Optimal 1200x630 ratio</span>
+                  <span className="text-slate-400 text-[11px]">
+                    Live URL: studyroom-amber.vercel.app • Optimal 1200x630
+                    ratio
+                  </span>
                   <button
                     onClick={downloadCardImage}
                     className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/30"
@@ -1386,14 +1501,11 @@ export const LinkedInShareModal: React.FC = () => {
                 </div>
               </div>
             )}
-
           </div>
-
         </div>
 
         {/* Modal Footer Actions */}
         <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-950/80">
-          
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={downloadTextFile}
@@ -1421,9 +1533,7 @@ export const LinkedInShareModal: React.FC = () => {
               <span>Copy & Open LinkedIn Feed</span>
             </button>
           </div>
-
         </div>
-
       </div>
     </div>
   );

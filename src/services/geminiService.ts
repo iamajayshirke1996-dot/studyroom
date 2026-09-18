@@ -72,16 +72,22 @@ async function callGeminiApi(prompt: string, temperature = 0.4): Promise<{ text:
   for (const model of GEMINI_MODELS) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
+    // 10-second AbortController timeout per model attempt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature, maxOutputTokens: 2000 },
         }),
       });
 
+      clearTimeout(timeoutId);
       const data: GeminiResponse = await res.json();
 
       if (res.ok && !data.error) {
@@ -124,8 +130,14 @@ async function callGeminiApi(prompt: string, temperature = 0.4): Promise<{ text:
         }
       }
     } catch (err: any) {
-      lastError = { message: err.message || `Failed to reach Gemini API model ${model}` };
-      // Continue to try next model candidate
+      clearTimeout(timeoutId);
+      const isTimeout = err.name === 'AbortError' || err.message?.includes('aborted');
+      lastError = {
+        message: isTimeout
+          ? `Gemini model ${model} did not respond within 10 seconds. Auto-switching to next model...`
+          : err.message || `Failed to reach Gemini API model ${model}`,
+      };
+      // Continue to try next model candidate in GEMINI_MODELS
       continue;
     }
   }
