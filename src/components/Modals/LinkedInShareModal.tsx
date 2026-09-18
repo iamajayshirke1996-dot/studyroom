@@ -503,11 +503,14 @@ export const LinkedInShareModal: React.FC = () => {
 
   // Find target goal from selection or context
   const activeGoal = useMemo(() => {
-    if (selectedGoalId && selectedGoalId !== "CUSTOM") {
+    if (isCustomTopicMode || selectedGoalId === "CUSTOM") {
+      return null;
+    }
+    if (selectedGoalId) {
       return goals.find((g) => g.id === selectedGoalId) || null;
     }
     return linkedInShareGoal || goals[0] || null;
-  }, [selectedGoalId, linkedInShareGoal, goals]);
+  }, [isCustomTopicMode, selectedGoalId, linkedInShareGoal, goals]);
 
   // Derived Active Title and Category
   const activeTitle = useMemo(() => {
@@ -542,13 +545,13 @@ export const LinkedInShareModal: React.FC = () => {
 
   // Post generation logic
   const generatePostCopy = () => {
-    const title = activeGoal
-      ? activeGoal.title
-      : "Modern Web Development & Concepts";
-    const category = activeGoal ? activeGoal.category : "Software Engineering";
-    const takeaways = activeGoal?.summary?.keyTakeaways || [];
-    const code = activeGoal?.summary?.cheatSheetCode || "";
-    const gotchas = activeGoal?.summary?.gotchas || [];
+    const title = activeTitle;
+    const category = activeCategory;
+    const takeaways = isCustomTopicMode
+      ? [title, "Mastered key implementation mental models"]
+      : activeGoal?.summary?.keyTakeaways || [];
+    const code = isCustomTopicMode ? "" : activeGoal?.summary?.cheatSheetCode || "";
+    const gotchas = isCustomTopicMode ? [] : activeGoal?.summary?.gotchas || [];
 
     const postLines: string[] = [];
 

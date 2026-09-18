@@ -140,11 +140,13 @@ export function generateLinkedInCardImage(options: GenerateImageOptions): string
   // Logo & App Name
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 22px Inter, system-ui, sans-serif';
-  ctx.fillText('🎓 StudyPulse', 80, 95);
+  const logoText = '🎓 StudyPulse';
+  ctx.fillText(logoText, 80, 95);
+  const logoWidth = ctx.measureText(logoText).width;
 
   ctx.fillStyle = theme === 'terminal' ? '#10b981' : '#c084fc';
   ctx.font = 'bold 15px Inter, sans-serif';
-  ctx.fillText('• KNOWLEDGE RECAP', 225, 94);
+  ctx.fillText('• KNOWLEDGE RECAP', 80 + logoWidth + 14, 94);
 
   // Top Right Category Badge Pill
   const categoryText = (category || 'SOFTWARE ENGINEERING').toUpperCase();
@@ -209,7 +211,7 @@ export function generateLinkedInCardImage(options: GenerateImageOptions): string
   ctx.stroke();
   curY += 38;
 
-  // 4. Key Takeaways list box (up to 4 points with pill numbers)
+  // 4. Key Takeaways list box (up to 4 points with pill numbers & multi-line wrapping)
   if (takeaways.length > 0) {
     ctx.fillStyle = theme === 'terminal' ? '#6ee7b7' : '#e9d5ff';
     ctx.font = 'extrabold 16px Inter, sans-serif';
@@ -217,7 +219,7 @@ export function generateLinkedInCardImage(options: GenerateImageOptions): string
     curY += 34;
 
     takeaways.slice(0, 4).forEach((takeaway, idx) => {
-      if (curY < 510) {
+      if (curY < 515) {
         // Pill index number
         drawRoundRect(ctx, 80, curY - 20, 28, 26, 13);
         ctx.fillStyle = theme === 'terminal' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(168, 85, 247, 0.35)';
@@ -230,20 +232,41 @@ export function generateLinkedInCardImage(options: GenerateImageOptions): string
         ctx.font = 'bold 14px Inter, sans-serif';
         ctx.fillText(`${idx + 1}`, 89, curY - 2);
 
-        // Takeaway Text
-        ctx.font = '500 19px Inter, sans-serif';
+        // Takeaway Text with Multi-Line Word Wrapping
+        ctx.font = '500 18px Inter, sans-serif';
         ctx.fillStyle = '#f8fafc';
 
-        let displayT = takeaway.trim();
-        if (ctx.measureText(displayT).width > 940) {
-          while (ctx.measureText(displayT + '...').width > 940 && displayT.length > 0) {
-            displayT = displayT.slice(0, -1);
+        const maxTakeawayWidth = 945;
+        const tWords = takeaway.trim().split(' ');
+        let tLine1 = '';
+        let tLine2 = '';
+
+        for (let w = 0; w < tWords.length; w++) {
+          const testLine = tLine1 + tWords[w] + ' ';
+          if (ctx.measureText(testLine).width > maxTakeawayWidth && w > 0) {
+            tLine2 = tWords.slice(w).join(' ');
+            break;
+          } else {
+            tLine1 = testLine;
           }
-          displayT += '...';
         }
 
-        ctx.fillText(displayT, 122, curY);
-        curY += 46;
+        // Render Line 1
+        ctx.fillText(tLine1.trim(), 122, curY);
+
+        if (tLine2) {
+          curY += 26;
+          let line2Display = tLine2.trim();
+          if (ctx.measureText(line2Display).width > maxTakeawayWidth) {
+            while (ctx.measureText(line2Display + '...').width > maxTakeawayWidth && line2Display.length > 0) {
+              line2Display = line2Display.slice(0, -1);
+            }
+            line2Display += '...';
+          }
+          ctx.fillText(line2Display, 122, curY);
+        }
+
+        curY += 38;
       }
     });
   }
